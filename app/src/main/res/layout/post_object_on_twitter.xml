@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/tv_cat"
+        android:text="Seleziona categoria"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="10dp"
+        />
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/post_category"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_below="@+id/tv_cat"
+        />
+    <TextView
+        android:id="@+id/tv_name"
+        android:text="Seleziona nome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/post_category"
+        android:layout_marginLeft="20dp"
+
+        />
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/post_name"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_centerInParent="true"
+            android:layout_below="@+id/tv_name"
+        />
+    <TextView
+        android:id="@+id/tv_desc"
+        android:text="Descrizione"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/post_name"
+        android:layout_marginLeft="20dp"
+
+        />
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/post_description"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_centerInParent="true"
+            android:layout_below="@+id/tv_desc"
+        />
+    <TextView
+        android:id="@+id/tv_lon"
+        android:text="Latitudine (lasciare vuoto per calcolarla automaticamente)"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/post_description"
+        android:layout_marginLeft="20dp"
+
+
+        />
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/post_lat"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_centerInParent="true"
+            android:layout_below="@+id/tv_lon"
+        />
+    <TextView
+        android:id="@+id/tv_lat"
+        android:text="Longitudine (lasciare vuoto per calcolarla automaticamente)"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/post_lat"
+        android:layout_marginLeft="20dp"
+
+        />
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/post_lon"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_centerInParent="true"
+            android:layout_below="@+id/tv_lat"
+        />
+
+
+
+
+
+</RelativeLayout>

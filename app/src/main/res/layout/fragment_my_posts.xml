@@ -6,11 +6,13 @@
     tools:context=".MyPostsFragment">
 
 
-    <ListView
-        android:id="@+id/my_posts_listview"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/my_posts_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/my_posts_text"
+        android:layout_alignParentTop="true"
+
         />
     <TextView
         android:id="@+id/my_posts_text"

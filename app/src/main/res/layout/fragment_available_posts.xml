@@ -12,18 +12,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clickable="true"
-        android:layout_above="@+id/button_twitter_test_button"
-        />
+        android:layout_above="@id/test_twitter_text"
+        android:layout_alignParentTop="true"
+        android:focusable="true" />
 
     <TextView
         android:id="@+id/test_twitter_text"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="Available posts"
         android:layout_centerInParent="true"
+        android:layout_alignParentBottom="true"
         android:textSize="20sp"
         android:scrollbars="vertical"
-        android:layout_below="@+id/my_recycler_view"
         />
 
     <Button
@@ -31,6 +32,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="press for twitter tweets"
-        android:layout_alignParentBottom="true"/>
-
+        android:layout_alignParentBottom="true"
+        android:visibility="gone"
+        />
 </RelativeLayout>

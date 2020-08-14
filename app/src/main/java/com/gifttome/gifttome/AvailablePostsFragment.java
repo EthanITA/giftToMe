@@ -22,15 +22,37 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.util.IOUtils;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.twitter.sdk.android.core.Callback;
+import com.twitter.sdk.android.core.DefaultLogger;
+import com.twitter.sdk.android.core.Result;
+import com.twitter.sdk.android.core.Twitter;
+import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.twitter.sdk.android.core.TwitterConfig;
+import com.twitter.sdk.android.core.TwitterException;
+import com.twitter.sdk.android.core.models.Tweet;
+import com.twitter.sdk.android.tweetui.TimelineResult;
+import com.twitter.sdk.android.tweetui.UserTimeline;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,21 +66,27 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     private View thisFragment;
     private TextView testTwitterText;
     private JsonObjectRequest jsonObjectRequest;
+    private JsonArrayRequest jsonArrayRequest;
     private RequestQueue queueBearer;
+    public String bearerToken100 = "AAAAAAAAAAAAAAAAAAAAACdfFAEAAAAAoVHrmvDLmFC5OKGmmoxJ1sGTVH8%3DhCzOtao5shMMNcyBmjZ3q267cXtOOaSoUH0tzn9r1QkcA6ekCI";
     private RequestQueue queueAvailableTweets;
     private String bearerToken;
     private JSONArray jsonArray;
     private StringRequest stringRequest;
-
+    private UserTimeline userTimeline;
 
     private RecyclerView recyclerView;
     private MyAdapter mAdapter;
     private RecyclerView.LayoutManager layoutManager;
     //String [] myDataset = {"ciao", "hi", "bella"};
-    List<AvailableObjectsData> avObData = new ArrayList<AvailableObjectsData>();
+    ArrayList<AvailableObjectsData> avObData = new ArrayList<>();
     String [] name = {"uno", "due", "tre", "wuattro", "cinque", "sei", "sette", "otto", "nove", "deeix"};
     String [] username = {"1", "2", "3", "w4", "5", "6", "7","8", "9" , "10"};
-
+    /*for (int i = 0; i < name.length; i++){
+         avObData.add(new AvailableObjectsData(name[i], username[i]));
+     }
+     Adapter
+     */
     public AvailablePostsFragment() {
         // Required empty public constructor
     }
@@ -70,89 +98,104 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         // Inflate the layout for this fragment
         thisFragment = inflater.inflate(R.layout.fragment_available_posts, container, false);
         inizializzazione();
-
+        TwitterConfig config = new TwitterConfig.Builder(getContext())
+                .logger(new DefaultLogger(Log.DEBUG))
+                .twitterAuthConfig(new TwitterAuthConfig("fud09hdnKuTT7PtYNuCZn2tRV", "gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp"))
+                .debug(true)
+                .build();
+        Twitter.initialize(config);
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
-        recyclerView.setHasFixedSize(true);
+        //recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
-
-        for (int i = 0; i < name.length; i++){
-            AvailableObjectsData y = new AvailableObjectsData(name[i], username[i]);
-            avObData.add(y);
-        }
         mAdapter = new MyAdapter(avObData, getActivity());
-        recyclerView.setAdapter(mAdapter);
         mAdapter.setClickListener(this);
+        recyclerView.setAdapter(mAdapter);
 
-        Toast.makeText(getActivity(), "aftef setclicklistener", Toast.LENGTH_SHORT).show();
-        bearTokenTwitter();
-
-        getTweetsAvailablePosts();
+        //bearTokenTwitter();
+        //getAvailablePostsTweets();
+        mAdapter.notifyDataSetChanged();
 
         return thisFragment;
     }
 
 
-    private void getTweetsAvailablePosts() {
+    private void getTweetsAvailablePosts(final String bear) throws URISyntaxException, MalformedURLException {
+        Toast.makeText(getActivity(), "dentro getTweetsAvailablePosts", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getActivity(), bear, Toast.LENGTH_SHORT).show();
+
         // Instantiate the RequestQueue.
         queueAvailableTweets = Volley.newRequestQueue(getActivity());
-        String url = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=GiftToMe5&include_rts=false&exclude_replies=true";
+        //String Myurl = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=GiftToME5&include_rts=false&exclude_replies=true&count=2";
+        String myUrl = "https://api.twitter.com/1.1/statuses/user_timeline.json?count=2&screen_name=GiftToME5";
+        URL url= new URL(myUrl);
+        URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
+        myUrl = uri.toASCIIString();
 
-        // Request a string response from the provided URL
-        stringRequest = new StringRequest
-                (Request.Method.GET, url, new Response.Listener<String>() {
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest
+                (Request.Method.GET, myUrl, null, new Response.Listener<JSONArray>() {
 
                     @Override
-                    public void onResponse(String response) {
-                        Toast.makeText(getActivity(),
-                                "success",
-                                Toast.LENGTH_SHORT).show();
-                        try {
-                            jsonArray = new JSONArray(response);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                        String testTotal = "";
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            try {
-                                testTotal = testTotal + jsonArray.getJSONObject(i).get("text");
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        testTwitterText.setText("Texts: " + testTotal);
+                    public void onResponse(JSONArray response) {
+                        testTwitterText.setText("Response: " + response.toString());
                     }
-
                 }, new Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // TODO: Handle error
-                        Toast.makeText(getActivity(),
-                                "This is a message displayed in a fail",
-                                Toast.LENGTH_SHORT).show();
-                        testTwitterText.setText("Response: " + "fuck error"+ error.toString());
-                        Log.e("onErrorResponse", error.toString());
+                        testTwitterText.setText("error getavtwits: " + error.toString());
 
                     }
-
-                }) {
+                })
+        {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> headers = new HashMap<>();
-                // Basic Authentication
-                String auth = "Bearer " + bearerToken;
-                //String auth = "";
-                //headers.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+            Map<String, String> headers = new HashMap<>();
+            //Bearer Authentication
+            String auth = "Bearer " + Base64.encodeToString("AAAAAAAAAAAAAAAAAAAAACdfFAEAAAAAoVHrmvDLmFC5OKGmmoxJ1sGTVH8%3DhCzOtao5shMMNcyBmjZ3q267cXtOOaSoUH0tzn9r1QkcA6ekCI".getBytes(), NO_WRAP);
+            //String auth = "Bearer " + Base64.encodeToString(bearerToken.getBytes(), NO_WRAP);
+                //headers.put("Accept-Encoding", "gzip");
                 headers.put("Authorization", auth);
-                return headers;
-            }
-        };
-    }
+                //headers.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                //headers.put("Host", "api.twitter.com");
+                //headers.put("User-Agent", "GiftToMe2020");
+            return headers;
+        }
 
+        };
+
+        queueAvailableTweets.add(jsonArrayRequest);
+
+    }
+    public void httpconnectionAvailableTweets() throws IOException {
+        String url = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=GiftToMe5&include_rts=false&exclude_replies=true&count=2";
+
+        URL myURL = new URL(url);
+        HttpURLConnection myURLConnection = (HttpURLConnection)myURL.openConnection();
+
+        String userCredentials = "username:password";
+        String auth = "Bearer " + Base64.encodeToString(bearerToken.getBytes(), NO_WRAP);
+
+        myURLConnection.setRequestProperty ("Authorization", auth);
+        myURLConnection.setRequestMethod("GET");
+        myURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        myURLConnection.setRequestProperty("Content-Length", "");
+        myURLConnection.setRequestProperty("Content-Language", "en-US");
+        myURLConnection.setUseCaches(false);
+        myURLConnection.setDoInput(true);
+        myURLConnection.setDoOutput(true);
+        int responseCode = myURLConnection.getResponseCode();
+        if (responseCode == 200) {
+            InputStream inputStr = myURLConnection.getInputStream();
+            String encoding = myURLConnection.getContentEncoding() == null ? "UTF-8"
+                    : myURLConnection.getContentEncoding();
+            //sjon = IOUtils.toString(inputStr, encoding);
+            /************** For getting response from HTTP URL end ***************/
+
+        }
+    }
 
     private void bearTokenTwitter() {
         // Instantiate the RequestQueue.
@@ -168,9 +211,11 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            testTwitterText.setText("Response: " + response.toString() + " "+ response.getString("access_token"));
+                            testTwitterText.setText("Response: " + response.getString("access_token"));
                             bearerToken = response.getString("access_token");
-                        } catch (JSONException e) {
+                            getTweetsAvailablePosts(bearerToken);
+                            Log.v("myTag", bearerToken);
+                        } catch (JSONException | MalformedURLException | URISyntaxException e) {
                             e.printStackTrace();
                         }
                     }
@@ -182,11 +227,9 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
                         Toast.makeText(getActivity(),
                                 "This is a message displayed in a Toast",
                                 Toast.LENGTH_SHORT);
-                        testTwitterText.setText("Response: " + "fuck error"+ error.toString());
+                        testTwitterText.setText("Response: " + "bear toker error"+ error.toString());
 
                     }
-
-
                 }) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
@@ -212,7 +255,7 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         testTwitterText = thisFragment.findViewById(R.id.test_twitter_text);
         testTwitterText.setMovementMethod(new ScrollingMovementMethod());
 
-        recyclerView = (RecyclerView) thisFragment.findViewById(R.id.my_recycler_view);
+        recyclerView = thisFragment.findViewById(R.id.my_recycler_view);
 
 
 
@@ -229,25 +272,73 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     @Override
     public void onClick(View view, int position) {
         Toast.makeText(getActivity(), "before gototchat"+String.valueOf(position), Toast.LENGTH_SHORT).show();
+        //in teoria se clicchi ti manda al chat fragment
         goToChatFragment();
     }
 
-    private void goToChatFragment() {
-            // Create fragment and give it an argument specifying the article it should show
-            ChatsFragment newFragment = new ChatsFragment();
-            FragmentTransaction transaction;
-            transaction = getActivity().getSupportFragmentManager().beginTransaction();
+    public void goToChatFragment(){
+        ChatsFragment newChatFragment = new ChatsFragment();
+        getActivity().getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragment_container, newChatFragment)
+                .addToBackStack(null)
+                .commit();
+    }
 
-// Replace whatever is in the fragment_container view with this fragment,
-// and add the transaction to the back stack so the user can navigate back
-            transaction.add(R.id.activity_main_layout, newFragment);
-            transaction.addToBackStack(null);
-        Toast.makeText(getActivity(), "dentro a gotochat", Toast.LENGTH_SHORT).show();
-// Commit the transaction
-            transaction.commit();
+
+    public void getAvailablePostsTweets() {
+        userTimeline = new UserTimeline.Builder()
+                .screenName("GiftToME5")
+                .includeRetweets(false)
+                .maxItemsPerRequest(200)
+                .build();
+        userTimeline.next(null, callback);
+    }
+    Callback<TimelineResult<Tweet>> callback = new Callback<TimelineResult<Tweet>>()
+    {
+        @Override
+        public void success(Result<TimelineResult<Tweet>> searchResult)
+        {
+            List<Tweet> tweets = searchResult.data.items;
+            long maxId = 0;
+            for (Tweet tweet : tweets){
+                String jsonString = tweet.text; //Here is the body
+                try {
+                    JSONObject jsonObject = new JSONObject(jsonString);
+
+                    String name1 =jsonObject.get("name").toString();
+                    Log.v("cred", name1);
+
+                    String username1 =jsonObject.get("issuer").toString();
+                    Log.v("cred", username1);
+
+                    if(name1 != null && !name1.equals("") && username1!= null && !username1.equals(""))
+                        avObData.add(new AvailableObjectsData(name1, username1));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                maxId = tweet.id;
+                Log.v("TagSuccc","str");
+
+            }
+
+            mAdapter.notifyDataSetChanged();
+            Log.v("credd", String.valueOf(avObData.size()));
+
+            //da ricontrollare
+            if (searchResult.data.items.size() == 100) {
+                userTimeline.previous(maxId, callback);
+            }
+            else {
+
+
+            }
 
         }
-
-
-
+        @Override
+        public void failure(TwitterException error)
+        {
+            Log.e("TAG","Error");
+        }
+    };
 }

@@ -5,8 +5,8 @@ public class AvailableObjectsData {
     private String issuer;
     private String category;
     private String name;
-    private Integer lat;
-    private Integer lon;
+    private Double lat;
+    private Double lon;
     private String description;
     private long twitterId;
 
@@ -18,7 +18,24 @@ public class AvailableObjectsData {
         this.lat = null;
         this.lon = null;
         this.description = null;
-       // this.twitterId = null;
+    }
+    public  AvailableObjectsData(double latitude, double longitude){
+        this.name = "name";
+        this.issuer = "issuer";
+        this.id = null;
+        this.category = null;
+        this.lat = latitude;
+        this.lon = longitude;
+        this.description = "description";
+    }
+    public  AvailableObjectsData(String name, String issuer, String id, String category, double lat, double lon, String description){
+        this.name = name;
+        this.issuer = issuer;
+        this.id = id;
+        this.category = category;
+        this.lat = lat;
+        this.lon = lon;
+        this.description = description;
     }
 
     public long getTwitterId() {
@@ -29,7 +46,7 @@ public class AvailableObjectsData {
         this.twitterId = twitterId;
     }
 
-    public AvailableObjectsData(String id, String issuer, String category, String name, Integer lat, Integer lon, String description) {
+    public AvailableObjectsData(String id, String issuer, String category, String name, Double lat, Double lon, String description) {
         this.id = id;
         this.issuer = issuer;
         this.category = category;
@@ -73,19 +90,19 @@ public class AvailableObjectsData {
         this.name = name;
     }
 
-    public Integer getLat() {
+    public Double getLat() {
         return lat;
     }
 
-    public void setLat(Integer lat) {
+    public void setLat(Double lat) {
         this.lat = lat;
     }
 
-    public Integer getLon() {
+    public Double getLon() {
         return lon;
     }
 
-    public void setLon(Integer lon) {
+    public void setLon(Double lon) {
         this.lon = lon;
     }
 

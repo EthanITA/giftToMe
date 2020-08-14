@@ -19,7 +19,7 @@ import java.util.List;
 class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
 
-    public List<AvailableObjectsData> AvailableObjectDataList = new ArrayList<AvailableObjectsData>();
+    private ArrayList<AvailableObjectsData> AvailableObjectDataList = new ArrayList<AvailableObjectsData>();
     private Context context;
     private static ItemClickListener itemClickListener;
     // Provide a reference to the views for each data item
@@ -44,15 +44,13 @@ class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
             if(itemClickListener!=null) {
                 itemClickListener.onClick(v, getAdapterPosition());
             }
-            else
-                Log.v("FUCK", "fuckcufkcfufk");
         }
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public MyAdapter(List myDataset, Context context) {
+    public MyAdapter(ArrayList myDataset, Context context) {
 
-        AvailableObjectDataList.addAll(myDataset);
+        AvailableObjectDataList = myDataset;
         this.context = context;
     }
 
@@ -86,9 +84,6 @@ class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                 goToChatsFragment();
                 Toast.makeText(v.getContext() , String.valueOf(position), Toast.LENGTH_SHORT).show();
             }
-
-
-
         });
 
          */
@@ -106,8 +101,8 @@ class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
 
     public void setClickListener(ItemClickListener itemClickListener){
-        Log.v("Fucck1", "fufuufufufuo");
-        this.itemClickListener = itemClickListener;
+        Log.v("tag", "tag");
+        MyAdapter.itemClickListener = itemClickListener;
     }
 
 }

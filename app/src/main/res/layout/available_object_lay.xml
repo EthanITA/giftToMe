@@ -9,16 +9,16 @@
     <TextView
         android:id="@+id/object_name"
         android:textSize="20dp"
-        android:paddingLeft="20dp"
-        android:layout_marginLeft="30dp"
+        android:paddingStart="20dp"
+        android:layout_marginStart="30dp"
         tools:text="bella li come ti butta"
-        android:padding="4dp"
+        android:padding="6dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
     <TextView
         android:id="@+id/username"
         tools:text="non c'è primo ma la frutta"
-        android:paddingLeft="80dp"
+        android:paddingStart="80dp"
         android:paddingBottom="5dp"
         android:layout_below="@+id/object_name"
         android:layout_width="match_parent"

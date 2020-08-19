@@ -27,13 +27,13 @@ import java.util.List;
 public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     //nofification
     NotificationManagerCompat notificationManagerCompat;
-    int notificationId = 0;
-    FrameLayout fragmentContainer;
-    Intent notificatioIntent;
+    int notificationId = 1000;
+    Intent notificationIntent;
 
     ArrayList<AvailableObjectsData> postsList = new ArrayList<>();
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.i("intentreceived!", "onReceive: received ");
         createNotificationChannel(context);
         Bundle intentBundle = intent.getExtras();
         if (intentBundle != null) {
@@ -70,7 +70,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
                 for (Geofence geofence :
                         triggeringGeofences) {
 
-                    Log.i("geofence", geofence.getRequestId().toString());
+                    Log.i("trigg geofence", geofence.getRequestId().toString());
 
                     sendNotification(context, Integer.parseInt(geofence.getRequestId()));
                 }
@@ -86,14 +86,14 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
     public void sendNotification(Context context, int id){
         //tap intent
-        Intent notificationIntent = new Intent(context, MainActivity.class);
+        notificationIntent = new Intent(context, MainActivity.class);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
 
         //create notification
         notificationManagerCompat = NotificationManagerCompat.from(context);
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, String.valueOf(R.string.CHANNEL_ID));
-        mBuilder.setContentTitle("Sei vicino ad un oggetto!")
+        mBuilder.setContentTitle("Sei vicino ad un oggetto!: " + postsList.get(id).getName())
                 .setContentText(postsList.get(id).getLat()+ ": " + postsList.get(id).getLon())
                 .setSmallIcon(R.drawable.notification_template_icon_bg)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -122,5 +122,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             notificationManager.createNotificationChannel(channel);
         }
     }
+
+
 
     }

@@ -52,7 +52,7 @@
         />
     <TextView
         android:id="@+id/tv_lon"
-        android:text="Latitudine (lasciare vuoto per calcolarla automaticamente)"
+        android:text="Latitudine "
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/post_description"
@@ -69,7 +69,7 @@
         />
     <TextView
         android:id="@+id/tv_lat"
-        android:text="Longitudine (lasciare vuoto per calcolarla automaticamente)"
+        android:text="Longitudine "
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/post_lat"

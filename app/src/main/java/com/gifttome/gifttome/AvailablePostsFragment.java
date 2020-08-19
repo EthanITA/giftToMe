@@ -3,7 +3,6 @@ package com.gifttome.gifttome;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,9 +25,6 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.gms.common.util.IOUtils;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.DefaultLogger;
 import com.twitter.sdk.android.core.Result;
@@ -51,8 +47,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +55,7 @@ import java.util.Map;
 import static android.util.Base64.NO_WRAP;
 
 
-public class AvailablePostsFragment extends Fragment implements ItemClickListener{
+public class AvailablePostsFragment extends Fragment implements ItemClickListener, View.OnClickListener{
     private Button testTwitterButton;
     private View thisFragment;
     private TextView testTwitterText;
@@ -76,7 +70,7 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     private UserTimeline userTimeline;
 
     private RecyclerView recyclerView;
-    private MyAdapter mAdapter;
+    private MyAdapter nAdapter;
     private RecyclerView.LayoutManager layoutManager;
     //String [] myDataset = {"ciao", "hi", "bella"};
     ArrayList<AvailableObjectsData> avObData = new ArrayList<>();
@@ -109,13 +103,13 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         //recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
-        mAdapter = new MyAdapter(avObData, getActivity());
-        mAdapter.setClickListener(this);
-        recyclerView.setAdapter(mAdapter);
+        nAdapter = new MyAdapter(avObData, getActivity(), this);
+        nAdapter.setClickListener(this);
+        recyclerView.setAdapter(nAdapter);
 
         //bearTokenTwitter();
-        //getAvailablePostsTweets();
-        mAdapter.notifyDataSetChanged();
+        getAvailablePostsTweets();
+        nAdapter.notifyDataSetChanged();
 
         return thisFragment;
     }
@@ -273,6 +267,7 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     public void onClick(View view, int position) {
         Toast.makeText(getActivity(), "before gototchat"+String.valueOf(position), Toast.LENGTH_SHORT).show();
         //in teoria se clicchi ti manda al chat fragment
+        Toast.makeText(getActivity(), String.valueOf(view.getRootView().getId()), Toast.LENGTH_SHORT).show();
         goToChatFragment();
     }
 
@@ -300,20 +295,34 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         {
             List<Tweet> tweets = searchResult.data.items;
             long maxId = 0;
+            avObData.clear();
+
             for (Tweet tweet : tweets){
+                MainActivity mainActivity = (MainActivity) getActivity();
+
                 String jsonString = tweet.text; //Here is the body
-                try {
+                try {//MANCA ID TRA LE COSE
                     JSONObject jsonObject = new JSONObject(jsonString);
+                    //sceglie i post che non hanno lo stesso id dell'utente
+                    String userId = jsonObject.get("id").toString();
+                    if(!String.valueOf(mainActivity.getUserid()).equals(userId))
+                    {
+                        String name1 = jsonObject.get("name").toString();
+                        Log.v("cred", name1);
 
-                    String name1 =jsonObject.get("name").toString();
-                    Log.v("cred", name1);
+                        String username1 = jsonObject.get("issuer").toString();
+                        Log.v("cred", username1);
 
-                    String username1 =jsonObject.get("issuer").toString();
-                    Log.v("cred", username1);
+                        String category1 = jsonObject.get("category").toString();
+                        double lat1 = Double.parseDouble(jsonObject.get("lat").toString());
+                        double lon1 = Double.parseDouble(jsonObject.get("lon").toString());
+                        String description1 = jsonObject.get("description").toString();
 
-                    if(name1 != null && !name1.equals("") && username1!= null && !username1.equals(""))
-                        avObData.add(new AvailableObjectsData(name1, username1));
-
+                        AvailableObjectsData newPost = new AvailableObjectsData(name1, username1, userId, category1, lat1, lon1, description1);
+                        newPost.setTwitterId(tweet.getId());
+                        if (!name1.equals("") && !username1.equals(""))
+                            avObData.add(newPost);
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -322,9 +331,12 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
 
             }
 
-            mAdapter.notifyDataSetChanged();
+            nAdapter.notifyDataSetChanged();
             Log.v("credd", String.valueOf(avObData.size()));
 
+            MainActivity mainActivity = (MainActivity) getActivity();
+            assert mainActivity != null;
+            mainActivity.addNewAvailablePost(avObData);
             //da ricontrollare
             if (searchResult.data.items.size() == 100) {
                 userTimeline.previous(maxId, callback);
@@ -341,4 +353,9 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
             Log.e("TAG","Error");
         }
     };
+
+    @Override
+    public void onClick(View v) {
+        goToChatFragment();
+    }
 }

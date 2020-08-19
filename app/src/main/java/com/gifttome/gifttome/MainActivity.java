@@ -43,6 +43,12 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class MainActivity extends AppCompatActivity{
+    //da settare lo userid
+    private Integer Userid = 1;
+
+    public Integer getUserid() {
+        return Userid;
+    }
 
     private Toolbar mToolbar;
     private ViewPager mViewPager;
@@ -73,7 +79,7 @@ public class MainActivity extends AppCompatActivity{
 
     //geofencing
     private GeofencingClient geofencingClient;
-    PendingIntent geofencePendingIntent;
+    private PendingIntent geofencePendingIntent;
     LinkedList<Geofence> geofenceList = new LinkedList<>();
 
 
@@ -88,9 +94,14 @@ public class MainActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        System.setProperty("twitter4j.oauth.consumerKey","fud09hdnKuTT7PtYNuCZn2tRV");
+        System.setProperty("twitter4j.oauth.consumerSecret","gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp");
+        System.setProperty("twitter4j.oauth.accessToken","1271353616847245315-Ru2rzisv9JsFyYglrOjdwN6zBTmlFC");
+        System.setProperty("twitter4j.oauth.accessTokenSecret","AYbNR5QC1pSOxXZHIDLnuiio0X3car8tdSZHVS8dZVvQe");
+        System.setProperty("twitter4j.debug","true");
 
-        availablePosts.add(new AvailableObjectsData(41.8719, 12.5674));
-        availablePosts.add(new AvailableObjectsData(44.8719, 2.5674));
+        //availablePosts.add(new AvailableObjectsData(41.8719, 12.5674));
+        //availablePosts.add(new AvailableObjectsData(36.6772, -122.5022));
        /* mToolbar = findViewById(R.id.main_page_toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setTitle("GiftToMe");
@@ -115,7 +126,7 @@ public class MainActivity extends AppCompatActivity{
                     return;
                 }
                 lastLocationMain = locationResult.getLastLocation();
-                Log.v("last location main", String.valueOf(lastLocationMain));
+                //Log.i("lastlocationmain", String.valueOf(lastLocationMain));
 
                 //for (Location location : locationResult.getLocations()) {
                 //}
@@ -126,7 +137,7 @@ public class MainActivity extends AppCompatActivity{
         makeLocationRequest();
         startLocationUpdates();
 
-        generateGeofencesForAvailableObjects();
+        //generateGeofencesForAvailableObjects();
 
 
 
@@ -186,6 +197,7 @@ public class MainActivity extends AppCompatActivity{
     protected void onPause() {
         super.onPause();
         //stopLocationUpdates();
+
     }
 
     private void stopLocationUpdates() {
@@ -238,7 +250,7 @@ public class MainActivity extends AppCompatActivity{
         createNotificationChannel();
     }
 
-    private PendingIntent getGeofencePendingIntent() {
+    public PendingIntent getGeofencePendingIntent() {
         // Reuse the PendingIntent if we already have it.
         if (geofencePendingIntent != null) {
             return geofencePendingIntent;
@@ -259,7 +271,7 @@ public class MainActivity extends AppCompatActivity{
         for (int j = 0; j< availablePosts.size(); j++){
             buildGeofence(j);
         }
-
+        Log.i("gengeof", "generateGeofencesForAvailableObjects: starting geofencing");
         startGeofencing();
     }
 
@@ -273,15 +285,16 @@ public class MainActivity extends AppCompatActivity{
                 .setCircularRegion(
                         availablePosts.get(position).getLat(),
                         availablePosts.get(position).getLon(),
-                        R.string.GEOFENCE_RADIUS_IN_METERS
+                        200
                 )
                 .setExpirationDuration(R.string.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                 .build());
+        Log.i("lonlat", "buildGeofence: lat " + availablePosts.get(position).getLat() +" lon: "+ availablePosts.get(position).getLon());
     }
 
     //forma la richiesta
-    private GeofencingRequest getGeofencingRequest() {
+    public GeofencingRequest getGeofencingRequest() {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(geofenceList);
@@ -308,7 +321,10 @@ public class MainActivity extends AppCompatActivity{
     //to stop geofencing
     //geofencingClient.removeGeofences(getGeofencePendingIntent())
 
-    public void addAvailablePost(){
+    public void addNewAvailablePost(ArrayList<AvailableObjectsData> avObjects){
+        Log.i("addNewAvailablePost", "avObjects size is "+ avObjects.size());
+        availablePosts.clear();
+        availablePosts.addAll(avObjects);
         generateGeofencesForAvailableObjects();
     }
 }

@@ -14,7 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-    <receiver android:name=".GeofenceBroadcastReceiver"/>
+    <receiver android:name=".GeofenceBroadcastReceiver"
+        android:exported="false"/>
+
 
         <activity android:name=".MainActivity">
             <intent-filter>

@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import android.view.LayoutInflater;
@@ -39,7 +40,7 @@ public class MainFragment extends Fragment {
         //((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);
         //((AppCompatActivity)getActivity()).getSupportActionBar().setTitle("GiftToMe main fragment");
         mViewPager = thisFragment.findViewById(R.id.main_tabs_pager);
-        myTabsAccessorAdapter = new TabsAccessAdapter(getActivity().getSupportFragmentManager(), FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+        myTabsAccessorAdapter = new TabsAccessAdapter(getChildFragmentManager(), FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         mViewPager.setAdapter(myTabsAccessorAdapter);
 
         mTabLayout = thisFragment.findViewById(R.id.main_tabs);

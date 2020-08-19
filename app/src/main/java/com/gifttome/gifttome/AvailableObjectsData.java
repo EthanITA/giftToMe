@@ -28,7 +28,9 @@ public class AvailableObjectsData {
         this.lon = longitude;
         this.description = "description";
     }
-    public  AvailableObjectsData(String name, String issuer, String id, String category, double lat, double lon, String description){
+    public  AvailableObjectsData(String name, String issuer, String id,
+                                 String category, double lat,
+                                 double lon, String description){
         this.name = name;
         this.issuer = issuer;
         this.id = id;
@@ -44,18 +46,6 @@ public class AvailableObjectsData {
 
     public void setTwitterId(long twitterId) {
         this.twitterId = twitterId;
-    }
-
-    public AvailableObjectsData(String id, String issuer, String category, String name, Double lat, Double lon, String description) {
-        this.id = id;
-        this.issuer = issuer;
-        this.category = category;
-        this.name = name;
-        this.lat = lat;
-        this.lon = lon;
-        this.description = description;
-        //this.twitterId = null;
-
     }
 
     public String getId() {

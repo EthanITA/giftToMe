@@ -11,16 +11,94 @@
         android:textSize="20dp"
         android:paddingStart="20dp"
         android:layout_marginStart="30dp"
-        tools:text="bella li come ti butta"
+        tools:text="name"
         android:padding="6dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
     <TextView
         android:id="@+id/username"
-        tools:text="non c'è primo ma la frutta"
+        tools:text="username"
         android:paddingStart="80dp"
         android:paddingBottom="5dp"
         android:layout_below="@+id/object_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/category"
+        tools:text="category"
+        android:paddingStart="80dp"
+        android:paddingBottom="5dp"
+        android:layout_below="@+id/username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible"
+
+        />
+    <TextView
+        android:id="@+id/description"
+        tools:text="description"
+        android:paddingStart="80dp"
+        android:paddingBottom="5dp"
+        android:layout_below="@+id/category"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible"
+
+        />
+    <TextView
+        android:id="@+id/lon"
+        tools:text="lon"
+        android:paddingStart="80dp"
+        android:paddingBottom="5dp"
+        android:layout_below="@+id/description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible"
+
+        />
+
+    <TextView
+        android:id="@+id/lat"
+        tools:text="lat"
+        android:paddingStart="80dp"
+        android:paddingEnd="80dp"
+        android:paddingBottom="5dp"
+        android:layout_toRightOf="@+id/lon"
+        android:layout_below="@+id/description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible"
+        />
+
+    <Button
+        android:id="@+id/send_message_button"
+        android:layout_marginTop="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text = "Manda un messaggio"
+        android:layout_below="@id/lon"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        tools:visibility="gone"/>
+
+    <Button
+        android:id="@+id/object_button"
+        android:layout_margin="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text = "modifica o elimina oggetto"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/lon"
+        android:visibility="gone"
+        tools:visibility="visible"/>
+
+
+
+
+
 </RelativeLayout>

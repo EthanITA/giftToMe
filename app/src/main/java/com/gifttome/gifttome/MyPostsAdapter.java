@@ -43,7 +43,6 @@ class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.MyViewHolder> {
             lat = view.findViewById(R.id.lat);
             removeOrModifyButton = view.findViewById(R.id.object_button);
         }
-
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
@@ -76,13 +75,8 @@ class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.MyViewHolder> {
         holder.category.setText(AvailableObjectDataList.get(position).getCategory());
         holder.lon.setText(String.valueOf(AvailableObjectDataList.get(position).getLon()));
         holder.lat.setText(String.valueOf(AvailableObjectDataList.get(position).getLat()));
-        //holder.modifyButton;
         holder.removeOrModifyButton.setId(position);
         holder.removeOrModifyButton.setOnClickListener(buttonClickListener);
-
-        //holder.removeButton;
-        /*holder.itemView.setOnClickListener(new View.OnClickListener() {
-         */
 
         final boolean isExpanded = position == mExpandedPosition;
         holder.description.setVisibility(isExpanded?View.VISIBLE:View.GONE);
@@ -103,7 +97,6 @@ class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.MyViewHolder> {
             }
         });
     }
-
 
     // Return the size of your dataset (invoked by the layout manager)
     @Override

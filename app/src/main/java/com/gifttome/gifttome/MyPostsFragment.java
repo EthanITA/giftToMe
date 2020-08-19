@@ -6,10 +6,8 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -18,27 +16,16 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.StrictMode;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -57,33 +44,22 @@ import com.twitter.sdk.android.core.models.Tweet;
 import com.twitter.sdk.android.tweetui.TimelineResult;
 import com.twitter.sdk.android.tweetui.UserTimeline;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
-import twitter4j.auth.AccessToken;
-import twitter4j.conf.ConfigurationBuilder;
-
 
 public class MyPostsFragment extends Fragment implements View.OnClickListener{
 
     private Button mButtton;
-    private Button modifyObButton;
-    private Button removeObButton;
-    private Button mButttonCoordinates;
-
     private TextView mTextView;
     private EditText category;
     private EditText description;
@@ -116,10 +92,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                 longitude = location.getLongitude();
             }
         } };
-    //private ArrayList<AvailableObjectsData> availableObjectsDataList = new ArrayList<>();
     private FusedLocationProviderClient mFusedLocationClient;
-    //private ListView mListView;
-
 
     public MyPostsFragment() {
         // Required empty public constructor
@@ -151,15 +124,11 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         }
     }
 
-
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-
         View thisFragment = inflater.inflate(R.layout.fragment_my_posts, container, false);
-        //availableObjectsDataList = new ArrayList<>();
         recyclerView = thisFragment.findViewById(R.id.my_posts_recyclerview);
         //in initialize()
         //twitter e display di tweets
@@ -169,7 +138,6 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                 .debug(true)
                 .build();
         com.twitter.sdk.android.core.Twitter.initialize(config);
-
 
         layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
@@ -183,40 +151,13 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
         //mFusedLocationClient.requestLocationUpdates(mLocationRequest,            mLocationCallback,            null /* Looper */);  /* can use Looper.getMainLooper(); */
         mButtton = thisFragment.findViewById(R.id.test_button_my_post_twitter);
-        mTextView = thisFragment.findViewById(R.id.my_posts_text);
-
         mButtton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 longitudineLatitudine(true);
-                //dialogDetailsPost();
             }
         });
-/*
-        //listview
-        mListView = thisFragment.findViewById(R.id.my_posts_listview);
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                modifyPost(position);
-            }
-        });
-        //adapter
-        final MyPostsAdapter myPostsAdapter = new MyPostsAdapter(availableObjectsDataList);
-        mListView.setAdapter(myPostsAdapter);
- */
-        mButttonCoordinates = thisFragment.findViewById(R.id.coordinates_button);
-        mButttonCoordinates.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //longitudineLatitudine(false);
-                //availableObjectsDataList.add(new AvailableObjectsData("test3", "test3"));
-                //((BaseAdapter) mListView.getAdapter()).notifyDataSetChanged();
-                MainActivity mainActivity = (MainActivity) getActivity();
-                assert mainActivity != null;
-                Log.i("coorbutt", "coordinaes button pressedd  ");
-            }
-        });
+
         getMyPostsTweets();
 
         return thisFragment;
@@ -303,7 +244,6 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
             e.printStackTrace();
         }
     }
-
 
     public void longitudineLatitudine(final Boolean dialog) {
         //ask permission to access location if not already granted
@@ -501,115 +441,4 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         Log.i("onclickposition", "onClick: "+ v.getId());
         modifyPost(v.getId());
     }
-
-/*
-    class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.MyViewHolder> {
-        Integer mExpandedPosition = -1;
-
-        private ArrayList<AvailableObjectsData> AvailableObjectDataList;
-        private MyPostsFragment fragment;
-        private ItemClickListener itemClickListener;
-        private View.OnClickListener onClickListener;
-        // Provide a reference to the views for each data item
-        // Complex data items may need more than one view per item, and
-        // you provide access to all the views for a data item in a view holder
-        public class MyViewHolder extends RecyclerView.ViewHolder {
-
-            public View view;
-            public TextView name;
-            public TextView username;
-            public TextView description;
-            public TextView category;
-            public TextView lon;
-            public TextView lat;
-            public Button removeButton;
-            public Button modifyButton;
-
-            public MyViewHolder(View view) {
-                super(view);
-                //view.setOnClickListener(this);
-                this.view = view;
-                name = view.findViewById(R.id.object_name);
-                username = view.findViewById(R.id.username);
-                description = view.findViewById(R.id.description);
-                category = view.findViewById(R.id.category);
-                lon = view.findViewById(R.id.lon);
-                lat = view.findViewById(R.id.lat);
-                removeButton = view.findViewById(R.id.remove_object_button);
-                modifyButton = view.findViewById(R.id.modify_object_button);
-            }
-
-        }
-
-        // Provide a suitable constructor (depends on the kind of dataset)
-        public MyPostsAdapter(ArrayList myDataset, MyPostsFragment fragment, View.OnClickListener onClickListener) {
-
-            AvailableObjectDataList = myDataset;
-            this.fragment = fragment;
-            this.onClickListener = onClickListener;
-
-        }
-
-        // Create new views (invoked by the layout manager)
-        @NonNull
-        @Override
-        public MyPostsAdapter.MyViewHolder onCreateViewHolder(ViewGroup parent,
-                                                                                    int viewType) {
-            // create a new view
-            View v = (View) LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.available_object_lay, parent, false);
-
-            return new MyPostsAdapter.MyViewHolder(v);
-        }
-
-        // Replace the contents of a view (invoked by the layout manager)
-        @Override
-        public void onBindViewHolder(MyPostsAdapter.MyViewHolder holder, final int position) {
-            // - get element from your dataset at this position
-            // - replace the contents of the view with that element
-            holder.name.setText(AvailableObjectDataList.get(position).getName());
-            holder.username.setText(AvailableObjectDataList.get(position).getIssuer());
-            holder.description.setText(AvailableObjectDataList.get(position).getDescription());
-            holder.category.setText(AvailableObjectDataList.get(position).getCategory());
-            holder.lon.setText(String.valueOf(AvailableObjectDataList.get(position).getLon()));
-            holder.lat.setText(String.valueOf(AvailableObjectDataList.get(position).getLat()));
-            //holder.modifyButton;
-            Log.i("onbindvh", "onbind: "+ position);
-            holder.removeButton.setId(position);
-            holder.removeButton.setOnClickListener(onClickListener);
-
-            //holder.removeButton;
-            /*holder.itemView.setOnClickListener(new View.OnClickListener() {
-             */
-/*
-            final boolean isExpanded = position == mExpandedPosition;
-            holder.description.setVisibility(isExpanded?View.VISIBLE:View.GONE);
-            holder.description.setVisibility(isExpanded?View.VISIBLE:View.GONE);
-            holder.category.setVisibility(isExpanded?View.VISIBLE:View.GONE);
-            holder.lon.setVisibility(isExpanded?View.VISIBLE:View.GONE);
-            holder.lat.setVisibility(isExpanded?View.VISIBLE:View.GONE);
-            holder.removeButton.setVisibility(isExpanded?View.VISIBLE:View.GONE);
-            holder.modifyButton.setVisibility(isExpanded?View.VISIBLE:View.GONE);
-
-            holder.itemView.setActivated(isExpanded);
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mExpandedPosition = isExpanded ? -1:position;
-                    notifyItemChanged(position);
-                }
-            });
-        }
-
-
-        // Return the size of your dataset (invoked by the layout manager)
-        @Override
-        public int getItemCount() {
-
-            return AvailableObjectDataList.size();
-
-        }
-
-    }
-    */
 }

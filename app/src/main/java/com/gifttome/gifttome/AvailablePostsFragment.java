@@ -56,7 +56,6 @@ import static android.util.Base64.NO_WRAP;
 
 
 public class AvailablePostsFragment extends Fragment implements ItemClickListener, View.OnClickListener{
-    private Button testTwitterButton;
     private View thisFragment;
     private TextView testTwitterText;
     private JsonObjectRequest jsonObjectRequest;
@@ -72,15 +71,8 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     private RecyclerView recyclerView;
     private MyAdapter nAdapter;
     private RecyclerView.LayoutManager layoutManager;
-    //String [] myDataset = {"ciao", "hi", "bella"};
     ArrayList<AvailableObjectsData> avObData = new ArrayList<>();
-    String [] name = {"uno", "due", "tre", "wuattro", "cinque", "sei", "sette", "otto", "nove", "deeix"};
-    String [] username = {"1", "2", "3", "w4", "5", "6", "7","8", "9" , "10"};
-    /*for (int i = 0; i < name.length; i++){
-         avObData.add(new AvailableObjectsData(name[i], username[i]));
-     }
-     Adapter
-     */
+
     public AvailablePostsFragment() {
         // Required empty public constructor
     }
@@ -245,22 +237,10 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     }
 
     private void inizializzazione() {
-        testTwitterButton = thisFragment.findViewById(R.id.button_twitter_test_button);
         testTwitterText = thisFragment.findViewById(R.id.test_twitter_text);
         testTwitterText.setMovementMethod(new ScrollingMovementMethod());
 
         recyclerView = thisFragment.findViewById(R.id.my_recycler_view);
-
-
-
-        testTwitterButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                //queueAvailableTweets.add(stringRequest);
-
-            }
-        });
     }
 
     @Override
@@ -278,7 +258,6 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
                 .addToBackStack(null)
                 .commit();
     }
-
 
     public void getAvailablePostsTweets() {
         userTimeline = new UserTimeline.Builder()
@@ -341,11 +320,6 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
             if (searchResult.data.items.size() == 100) {
                 userTimeline.previous(maxId, callback);
             }
-            else {
-
-
-            }
-
         }
         @Override
         public void failure(TwitterException error)

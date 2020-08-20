@@ -338,7 +338,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         return tweet;
     }
     public String setFormatTweetArticle(AvailableObjectsData object) throws JSONException {
-        String tweet = "#LAM_giftToMe_2020-article \n";
+        String string = "#LAM_giftToMe_2020-article \n";
         JSONObject json =  new JSONObject();
         json.put("id", object.getId());
         json.put("issuer", object.getIssuer());
@@ -347,8 +347,8 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         json.put("lat",object.getLat());
         json.put("lon", object.getLon());
         json.put("description",object.getDescription());
-        tweet = tweet + json.toString(1);
-        return tweet;
+        string = string + json.toString(1);
+        return string;
     }
 
     public Status postOnTwitter(String text) throws TwitterException {
@@ -364,7 +364,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         return status;
     }
 
-    public void getMyPostsTweets() {
+    private void getMyPostsTweets() {
         userTimeline = new UserTimeline.Builder()
                 .screenName("GiftToME5")
                 .includeRetweets(false)

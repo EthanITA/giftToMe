@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".LogInFragment">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scegli uno username"
+        android:layout_above="@+id/login_username"
+        android:layout_centerInParent="true"
+        android:layout_margin="30dp"
+        />
+    <EditText
+        android:autofillHints="username"
+        android:id="@+id/login_username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:hint="username"
+        />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/username_already_taken_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Username già utilizzato, scegline un'altro"
+        android:textColor="@color/tw__composer_red"
+        android:layout_below="@+id/login_username"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        tools:visibility="visible"
+        />
+
+    <Button
+        android:id="@+id/login_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_below="@+id/login_username"
+        android:layout_margin="15dp"
+        android:text="Seleziona"
+        />
+
+</RelativeLayout>

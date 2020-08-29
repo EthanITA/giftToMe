@@ -7,7 +7,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
 public class TabsAccessAdapter extends FragmentPagerAdapter {
-    public TabsAccessAdapter(@NonNull FragmentManager fm, int behavior) {
+    public TabsAccessAdapter(@NonNull FragmentManager fm, int behavior, String username) {
         super(fm, behavior);
     }
 
@@ -18,6 +18,8 @@ public class TabsAccessAdapter extends FragmentPagerAdapter {
 
             case 0:
                 MyPostsFragment myPostsFragment = new MyPostsFragment();
+
+
                 return myPostsFragment;
             case 1:
                 AvailablePostsFragment availablePostsFragment = new AvailablePostsFragment();

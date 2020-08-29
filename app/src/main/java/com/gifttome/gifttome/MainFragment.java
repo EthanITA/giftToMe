@@ -2,13 +2,12 @@ package com.gifttome.gifttome;
 
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +27,7 @@ public class MainFragment extends Fragment {
     private Toolbar mToolbar;
     private ViewPager mViewPager;
     private TabLayout mTabLayout;
+    private String username;
 
     private TabsAccessAdapter myTabsAccessorAdapter;
 
@@ -36,16 +36,21 @@ public class MainFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View thisFragment = inflater.inflate(R.layout.fragment_main, container, false);
+
+        if (getArguments() == null)
+            Log.i("getArguments", "getArguments is null ");
+        username  =  getArguments().getString("username");
+
         //mToolbar = thisFragment.findViewById(R.id.main_page_toolbar);
         //((AppCompatActivity)getActivity()).setSupportActionBar(mToolbar);
         //((AppCompatActivity)getActivity()).getSupportActionBar().setTitle("GiftToMe main fragment");
         mViewPager = thisFragment.findViewById(R.id.main_tabs_pager);
-        myTabsAccessorAdapter = new TabsAccessAdapter(getChildFragmentManager(), FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+        myTabsAccessorAdapter = new TabsAccessAdapter(getChildFragmentManager(), FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT, username);
         mViewPager.setAdapter(myTabsAccessorAdapter);
 
         mTabLayout = thisFragment.findViewById(R.id.main_tabs);
         mTabLayout.setupWithViewPager(mViewPager);
-        ChatsFragment newChatFragment = new ChatsFragment();
+        RepliesFragment newChatFragment = new RepliesFragment();
         /*getActivity().getSupportFragmentManager().beginTransaction()
                 .add(R.id.frag_container, newChatFragment)
                 .addToBackStack(null)

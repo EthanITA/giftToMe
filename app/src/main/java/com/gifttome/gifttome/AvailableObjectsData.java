@@ -1,7 +1,9 @@
 package com.gifttome.gifttome;
 
+import java.util.UUID;
+
 public class AvailableObjectsData {
-    private String id;
+    private UUID id;
     private String issuer;
     private String category;
     private String name;
@@ -28,7 +30,7 @@ public class AvailableObjectsData {
         this.lon = longitude;
         this.description = "description";
     }
-    public  AvailableObjectsData(String name, String issuer, String id,
+    public  AvailableObjectsData(String name, String issuer, UUID id,
                                  String category, double lat,
                                  double lon, String description){
         this.name = name;
@@ -48,11 +50,11 @@ public class AvailableObjectsData {
         this.twitterId = twitterId;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

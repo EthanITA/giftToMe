@@ -1,5 +1,7 @@
 package com.gifttome.gifttome;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -51,6 +53,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Executor;
 
 import static android.util.Base64.NO_WRAP;
 
@@ -68,10 +72,15 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     private StringRequest stringRequest;
     private UserTimeline userTimeline;
 
+    private String username;
+
     private RecyclerView recyclerView;
     private MyAdapter nAdapter;
     private RecyclerView.LayoutManager layoutManager;
     ArrayList<AvailableObjectsData> avObData = new ArrayList<>();
+    private MainActivity mainActivity;
+    private Button searchButton;
+
 
     public AvailablePostsFragment() {
         // Required empty public constructor
@@ -83,6 +92,10 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
 
         // Inflate the layout for this fragment
         thisFragment = inflater.inflate(R.layout.fragment_available_posts, container, false);
+        mainActivity = (MainActivity) getActivity();
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        username = sharedPreferences.getString("username", null);
+        Log.i("usernamefromshared", "onCreateView: " + username);
         inizializzazione();
         TwitterConfig config = new TwitterConfig.Builder(getContext())
                 .logger(new DefaultLogger(Log.DEBUG))
@@ -99,8 +112,12 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         nAdapter.setClickListener(this);
         recyclerView.setAdapter(nAdapter);
 
+        searchButton = thisFragment.findViewById(R.id.search_button1);
+
+
         //bearTokenTwitter();
-        getAvailablePostsTweets();
+        makeTwitterRequest("true");
+        //getAvailablePostsTweets();
         nAdapter.notifyDataSetChanged();
 
         return thisFragment;
@@ -138,23 +155,24 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-            Map<String, String> headers = new HashMap<>();
-            //Bearer Authentication
-            String auth = "Bearer " + Base64.encodeToString("AAAAAAAAAAAAAAAAAAAAACdfFAEAAAAAoVHrmvDLmFC5OKGmmoxJ1sGTVH8%3DhCzOtao5shMMNcyBmjZ3q267cXtOOaSoUH0tzn9r1QkcA6ekCI".getBytes(), NO_WRAP);
-            //String auth = "Bearer " + Base64.encodeToString(bearerToken.getBytes(), NO_WRAP);
+                Map<String, String> headers = new HashMap<>();
+                //Bearer Authentication
+                String auth = "Bearer " + Base64.encodeToString("AAAAAAAAAAAAAAAAAAAAACdfFAEAAAAAoVHrmvDLmFC5OKGmmoxJ1sGTVH8%3DhCzOtao5shMMNcyBmjZ3q267cXtOOaSoUH0tzn9r1QkcA6ekCI".getBytes(), NO_WRAP);
+                //String auth = "Bearer " + Base64.encodeToString(bearerToken.getBytes(), NO_WRAP);
                 //headers.put("Accept-Encoding", "gzip");
                 headers.put("Authorization", auth);
                 //headers.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
                 //headers.put("Host", "api.twitter.com");
                 //headers.put("User-Agent", "GiftToMe2020");
-            return headers;
-        }
+                return headers;
+            }
 
         };
 
         queueAvailableTweets.add(jsonArrayRequest);
 
     }
+
     public void httpconnectionAvailableTweets() throws IOException {
         String url = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=GiftToMe5&include_rts=false&exclude_replies=true&count=2";
 
@@ -252,21 +270,23 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     }
 
     public void goToChatFragment(){
-        ChatsFragment newChatFragment = new ChatsFragment();
+        RepliesFragment newChatFragment = new RepliesFragment();
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(R.id.fragment_container, newChatFragment)
                 .addToBackStack(null)
                 .commit();
     }
 
-    public void getAvailablePostsTweets() {
+    public ArrayList<AvailableObjectsData> getAvailablePostsTweets() {
         userTimeline = new UserTimeline.Builder()
                 .screenName("GiftToME5")
                 .includeRetweets(false)
                 .maxItemsPerRequest(200)
                 .build();
         userTimeline.next(null, callback);
+        return avObData;
     }
+
     Callback<TimelineResult<Tweet>> callback = new Callback<TimelineResult<Tweet>>()
     {
         @Override
@@ -275,47 +295,47 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
             List<Tweet> tweets = searchResult.data.items;
             long maxId = 0;
             avObData.clear();
+            MainActivity mainActivity = (MainActivity) getActivity();
 
             for (Tweet tweet : tweets){
-                MainActivity mainActivity = (MainActivity) getActivity();
-
                 String jsonString = tweet.text; //Here is the body
-                try {//MANCA ID TRA LE COSE
+                try {
                     JSONObject jsonObject = new JSONObject(jsonString);
-                    //sceglie i post che non hanno lo stesso id dell'utente
-                    String userId = jsonObject.get("id").toString();
-                    if(!String.valueOf(mainActivity.getUserid()).equals(userId))
-                    {
+
+                    //sceglie i post che non hanno lo stesso username dell'utente
+                    String username1 = jsonObject.get("issuer").toString();
+                    Log.v("credUsernameAPF", username1);
+                    Log.v("credUsernameAPFSP", username);
+
+                    if(!username1.equals(username)) {
                         String name1 = jsonObject.get("name").toString();
                         Log.v("cred", name1);
 
-                        String username1 = jsonObject.get("issuer").toString();
-                        Log.v("cred", username1);
-
+                        String userId = jsonObject.get("id").toString();
                         String category1 = jsonObject.get("category").toString();
                         double lat1 = Double.parseDouble(jsonObject.get("lat").toString());
                         double lon1 = Double.parseDouble(jsonObject.get("lon").toString());
                         String description1 = jsonObject.get("description").toString();
-
-                        AvailableObjectsData newPost = new AvailableObjectsData(name1, username1, userId, category1, lat1, lon1, description1);
+                        Log.i("idnotvalid", userId);
+                        AvailableObjectsData newPost = new AvailableObjectsData(name1, username1, UUID.fromString(userId), category1, lat1, lon1, description1);
                         newPost.setTwitterId(tweet.getId());
-                        if (!name1.equals("") && !username1.equals(""))
+                        if (!name1.equals("") && !username1.equals("")) {
                             avObData.add(newPost);
+                        }
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+
                 maxId = tweet.id;
                 Log.v("TagSuccc","str");
 
             }
-
+            assert mainActivity != null;
+            mainActivity.addNewAvailablePost(avObData);
             nAdapter.notifyDataSetChanged();
             Log.v("credd", String.valueOf(avObData.size()));
 
-            MainActivity mainActivity = (MainActivity) getActivity();
-            assert mainActivity != null;
-            mainActivity.addNewAvailablePost(avObData);
             //da ricontrollare
             if (searchResult.data.items.size() == 100) {
                 userTimeline.previous(maxId, callback);
@@ -328,8 +348,64 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         }
     };
 
+    interface RepositoryCallback {
+        void onComplete(ArrayList<AvailableObjectsData> result);
+    }
+
+    public void makeTwitterRequest(String text) {
+        GetTwitterInBackground gtib = new GetTwitterInBackground(mainActivity.executorService);
+        gtib.makeRequest(text, new RepositoryCallback() {
+            @Override
+            public void onComplete(ArrayList<AvailableObjectsData> result) {
+                Log.i("oncompletearray", "onComplete: " + result.size());
+
+/*
+                avObData.clear();
+                avObData.addAll(result);
+                MainActivity mainActivity = (MainActivity) getActivity();
+                assert mainActivity != null;
+                mainActivity.addNewAvailablePost(avObData);
+ */
+
+            }
+        });
+    }
+
+
     @Override
     public void onClick(View v) {
         goToChatFragment();
     }
+
+    public class GetTwitterInBackground {
+
+        private final Executor executor;
+
+        public GetTwitterInBackground(Executor executor) {
+            this.executor = executor;
+        }
+
+        public void makeRequest(final String text, final RepositoryCallback callback){
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        ArrayList<AvailableObjectsData> result = makeSynchronousTwitterRequest(text);
+                        callback.onComplete(result);
+                    } catch (Exception ignored) {
+
+                    }
+                }
+            });
+        }
+
+        public ArrayList<AvailableObjectsData> makeSynchronousTwitterRequest(String text) {
+            return getAvailablePostsTweets();
+        }
+
+
+    }
+
 }
+
+

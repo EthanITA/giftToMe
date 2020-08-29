@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <TextView
+        android:id="@+id/object_replied_to"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        tools:text= "object_replied_to NAME"
+        android:layout_margin="10dp"
+        />
+
+        <TextView
+        android:id="@+id/replier_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        tools:text= "REPLY IS FROM: NAME"
+        android:layout_margin="8dp"
+            android:layout_below="@+id/object_replied_to"
+            android:layout_centerInParent="true"
+        />
+        <TextView
+        android:id="@+id/reply_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        tools:text= "REPLY IS FROM: NAME"
+        android:layout_margin="8dp"
+            android:layout_below="@+id/replier_name"
+            android:layout_centerInParent="true"
+        />
+
+    <Button
+        android:id="@+id/reply_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/reply_message"
+        android:layout_centerInParent="true"
+        android:text="do stuff"
+        />
+
+
+</RelativeLayout>

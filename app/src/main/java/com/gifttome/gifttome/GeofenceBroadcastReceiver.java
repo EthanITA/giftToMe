@@ -40,7 +40,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             intentBundle.get("jsonlist");
             Gson gson = new Gson();
             String json = intentBundle.getString("jsonlist");
-            Log.i("arraylist da brod rec", json);
+            Log.i("arraylistdabrodrec", json);
             Type type = new TypeToken<ArrayList<AvailableObjectsData>>() {}.getType();
             postsList = gson.fromJson(json, type);
         }
@@ -76,10 +76,10 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
                 }
                 // Send notification and log the transition details.
                 //sendNotification(geofenceTransitionDetails);
-                Log.i("geofencing location", String.valueOf(geofencingEvent.getTriggeringLocation()));
+                Log.i("geofencinglocation", String.valueOf(geofencingEvent.getTriggeringLocation()));
             } else {
                 // Log the error.
-                Log.e("Geofence transition","error");
+                Log.e("Geofencetransition","error");
             }
         }
 

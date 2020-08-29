@@ -3,17 +3,22 @@ package com.gifttome.gifttome;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager.widget.ViewPager;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,9 +46,15 @@ import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity {
     //da settare lo userid
+    ExecutorService executorService = Executors.newFixedThreadPool(4);
+
+    private String username;
+
     private Integer Userid = 1;
 
     public Integer getUserid() {
@@ -56,7 +67,24 @@ public class MainActivity extends AppCompatActivity{
 
     private TabsAccessAdapter myTabsAccessorAdapter;
     private String bearerToken;
-    private ArrayList<AvailableObjectsData> myPosts = new ArrayList<AvailableObjectsData>();
+    private ArrayList<AvailableObjectsData> myPosts = new ArrayList<>();
+
+    public ArrayList<AvailableObjectsData> getMyPosts() {
+        return myPosts;
+    }
+
+    public void addToMyPosts(AvailableObjectsData myPost) {
+        this.myPosts.add(myPost);
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     private ArrayList<AvailableObjectsData> availablePosts = new ArrayList<AvailableObjectsData>();
 
     //messages i ges
@@ -94,54 +122,75 @@ public class MainActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        System.setProperty("twitter4j.oauth.consumerKey","fud09hdnKuTT7PtYNuCZn2tRV");
-        System.setProperty("twitter4j.oauth.consumerSecret","gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp");
-        System.setProperty("twitter4j.oauth.accessToken","1271353616847245315-Ru2rzisv9JsFyYglrOjdwN6zBTmlFC");
-        System.setProperty("twitter4j.oauth.accessTokenSecret","AYbNR5QC1pSOxXZHIDLnuiio0X3car8tdSZHVS8dZVvQe");
-        System.setProperty("twitter4j.debug","true");
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        String sharedPrefUsername = sharedPreferences.getString("username", null);
+        if(sharedPrefUsername == null){
+           /*
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            LogInFragment logInFragment = new LogInFragment();
 
-        //availablePosts.add(new AvailableObjectsData(41.8719, 12.5674));
-        //availablePosts.add(new AvailableObjectsData(36.6772, -122.5022));
+            fragmentTransaction.add(R.id.fragment_container, logInFragment);
+            fragmentTransaction.commit();
+
+            */
+
+
+           Intent loginIntent = new Intent(this, LoginActivity.class);
+           startActivity(loginIntent);
+        }
+        else {
+            username = sharedPrefUsername;
+            Log.i("sharedPUsernameMainAc", "onCreate: ");
+            System.setProperty("twitter4j.oauth.consumerKey", "fud09hdnKuTT7PtYNuCZn2tRV");
+            System.setProperty("twitter4j.oauth.consumerSecret", "gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp");
+            System.setProperty("twitter4j.oauth.accessToken", "1271353616847245315-Ru2rzisv9JsFyYglrOjdwN6zBTmlFC");
+            System.setProperty("twitter4j.oauth.accessTokenSecret", "AYbNR5QC1pSOxXZHIDLnuiio0X3car8tdSZHVS8dZVvQe");
+            System.setProperty("twitter4j.debug", "true");
+
+            //availablePosts.add(new AvailableObjectsData(41.8719, 12.5674));
+            //availablePosts.add(new AvailableObjectsData(36.6772, -122.5022));
        /* mToolbar = findViewById(R.id.main_page_toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setTitle("GiftToMe");
         */
-        geofencingClient = LocationServices.getGeofencingClient(this);
+            geofencingClient = LocationServices.getGeofencingClient(this);
 
-        fragmentContainer = findViewById(R.id.fragment_container);
+            fragmentContainer = findViewById(R.id.fragment_container);
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        MainFragment mainFragment = new MainFragment();
-        fragmentTransaction.add(R.id.fragment_container, mainFragment);
-        fragmentTransaction.commit();
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            MainFragment mainFragment = new MainFragment();
 
-        fusedLocationClientMain = LocationServices.getFusedLocationProviderClient(this);
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) {
-                    Log.v("last location is null", "F");
+            Bundle bundle = new Bundle();
+            bundle.putString("username", username);
+            mainFragment.setArguments(bundle);
 
-                    return;
+            fragmentTransaction.add(R.id.fragment_container, mainFragment);
+            fragmentTransaction.commit();
+
+            fusedLocationClientMain = LocationServices.getFusedLocationProviderClient(this);
+            locationCallback = new LocationCallback() {
+                @Override
+                public void onLocationResult(LocationResult locationResult) {
+                    if (locationResult == null) {
+                        Log.v("last location is null", "F");
+
+                        return;
+                    }
+                    lastLocationMain = locationResult.getLastLocation();
                 }
-                lastLocationMain = locationResult.getLastLocation();
-                //Log.i("lastlocationmain", String.valueOf(lastLocationMain));
+            };
 
-                //for (Location location : locationResult.getLocations()) {
-                //}
-            }
-        };
+            //sendNotification();
+            makeLocationRequest();
+            startLocationUpdates();
 
-        //sendNotification();
-        makeLocationRequest();
-        startLocationUpdates();
-
-        //generateGeofencesForAvailableObjects();
-
-
+            //generateGeofencesForAvailableObjects();
+        }
 
     }
+
     protected void makeLocationRequest() {
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
@@ -188,6 +237,16 @@ public class MainActivity extends AppCompatActivity{
 
 
     private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         fusedLocationClientMain.requestLocationUpdates(locationRequestMain,
                 locationCallback,
                 Looper.getMainLooper());
@@ -201,11 +260,11 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private void stopLocationUpdates() {
-        if(fusedLocationClientMain!= null)
+        if (fusedLocationClientMain != null)
             fusedLocationClientMain.removeLocationUpdates(locationCallback);
     }
 
-    public void sendNotification(){
+    public void sendNotification() {
         //tap intent
         Intent notificatioIntent = new Intent(this, MainActivity.class);
 
@@ -258,7 +317,7 @@ public class MainActivity extends AppCompatActivity{
         Intent geoIntent = new Intent(this, GeofenceBroadcastReceiver.class);
         Gson gson = new Gson();
         String jsonlist = gson.toJson(availablePosts);
-        geoIntent.putExtra("jsonlist",jsonlist);
+        geoIntent.putExtra("jsonlist", jsonlist);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
         // calling addGeofences() and removeGeofences().
         geofencePendingIntent = PendingIntent.getBroadcast(this, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT
@@ -266,9 +325,10 @@ public class MainActivity extends AppCompatActivity{
         return geofencePendingIntent;
     }
 
-    public void generateGeofencesForAvailableObjects(){
+    public void generateGeofencesForAvailableObjects() {
+        geofenceList.clear();
         //genero geofence per ogni oggetto
-        for (int j = 0; j< availablePosts.size(); j++){
+        for (int j = 0; j < availablePosts.size(); j++) {
             buildGeofence(j);
         }
         Log.i("gengeof", "generateGeofencesForAvailableObjects: starting geofencing");
@@ -276,7 +336,7 @@ public class MainActivity extends AppCompatActivity{
     }
 
     //crea i singoli geofence
-    public void buildGeofence(int position){
+    public void buildGeofence(int position) {
         geofenceList.add(new Geofence.Builder()
                 // Set the request ID of the geofence. This is a string to identify this
                 // geofence.
@@ -290,7 +350,7 @@ public class MainActivity extends AppCompatActivity{
                 .setExpirationDuration(R.string.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                 .build());
-        Log.i("lonlat", "buildGeofence: lat " + availablePosts.get(position).getLat() +" lon: "+ availablePosts.get(position).getLon());
+        Log.i("lonlat", "buildGeofence: lat " + availablePosts.get(position).getLat() + " lon: " + availablePosts.get(position).getLon());
     }
 
     //forma la richiesta
@@ -302,6 +362,16 @@ public class MainActivity extends AppCompatActivity{
     }
 
     public void startGeofencing() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         geofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                 .addOnSuccessListener(this, new OnSuccessListener<Void>() {
                     @Override
@@ -325,6 +395,8 @@ public class MainActivity extends AppCompatActivity{
         Log.i("addNewAvailablePost", "avObjects size is "+ avObjects.size());
         availablePosts.clear();
         availablePosts.addAll(avObjects);
+        Log.i("addNewAvailablePost", "availablePosts size is "+ availablePosts.size());
+
         generateGeofencesForAvailableObjects();
     }
 }

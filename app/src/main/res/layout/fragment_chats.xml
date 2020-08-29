@@ -11,6 +11,16 @@
         android:layout_centerInParent="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="hello_chat_fragment" />
+        android:textSize="30dp"
+        android:text="replies to your posts"
+        android:layout_alignParentTop="true"/>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/replies_recycler_view"
+        android:layout_below="@+id/chat_test"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+                />
+
 
 </RelativeLayout>

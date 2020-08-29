@@ -51,6 +51,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import twitter4j.Status;
 import twitter4j.Twitter;
@@ -58,9 +59,8 @@ import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 
 public class MyPostsFragment extends Fragment implements View.OnClickListener{
-
+    private String username;
     private Button mButtton;
-    private TextView mTextView;
     private EditText category;
     private EditText description;
     private EditText name;
@@ -68,20 +68,18 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
     private EditText lon;
     private double latitude;
     private double longitude;
-    private RecyclerView recyclerView;//t4j
-
+        //t4j
     Twitter twitter = TwitterFactory.getSingleton();
-
-
 
     public MyPostsAdapter getmAdapter() {
         return mAdapter;
     }
 
+    private RecyclerView recyclerView;
     private MyPostsAdapter mAdapter;
     private RecyclerView.LayoutManager layoutManager;
-    ArrayList<AvailableObjectsData> myPostsList = new ArrayList<>();
-    UserTimeline userTimeline;
+    private ArrayList<AvailableObjectsData> myPostsList = new ArrayList<>();
+    private UserTimeline userTimeline;
 
     LocationCallback mLocationCallback = new LocationCallback() {
         @Override
@@ -130,6 +128,12 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         // Inflate the layout for this fragment
         View thisFragment = inflater.inflate(R.layout.fragment_my_posts, container, false);
         recyclerView = thisFragment.findViewById(R.id.my_posts_recyclerview);
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        username = sharedPreferences.getString("username", null);
+        /*if (getArguments() == null)
+            Log.i("getArguments", "getArguments is null ");
+        username  =  getArguments().getString("username");
+         */
         //in initialize()
         //twitter e display di tweets
         TwitterConfig config = new TwitterConfig.Builder(getContext())
@@ -149,7 +153,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
 
         //farea richiesta del gps
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
-        //mFusedLocationClient.requestLocationUpdates(mLocationRequest,            mLocationCallback,            null /* Looper */);  /* can use Looper.getMainLooper(); */
+        //mFusedLocationClient.requestLocationUpdates(mLocationRequest,mLocationCallback,null /* Looper */);  /* can use Looper.getMainLooper(); */
         mButtton = thisFragment.findViewById(R.id.test_button_my_post_twitter);
         mButtton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -193,6 +197,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
 
                 //Twitter twitter = TwitterFactory.getSingleton();
                 //rimuovo l'oggetto vecchio dall'arraylist
+                UUID oldUUID = myPostsList.get(position).getId();
                 myPostsList.remove(position);
                 mAdapter.notifyDataSetChanged();
                 Status tweetStatus;
@@ -200,8 +205,8 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                     //cancello il tweet dell'oggetto vecchio
                     twitter.tweets().destroyStatus(object.getTwitterId());
                     //posto il tweet dell'oggetto nuovo
-                    MainActivity mainActivity = (MainActivity) getActivity();
-                    AvailableObjectsData newObject = new AvailableObjectsData(thisName.getText().toString(), "username", mainActivity.getUserid().toString(), thisCategory.getText().toString(), Double.valueOf(thislat.getText().toString()), Double.valueOf(thisLon.getText().toString()), thisDescr.getText().toString());
+
+                    AvailableObjectsData newObject = new AvailableObjectsData(thisName.getText().toString(), username , oldUUID, thisCategory.getText().toString(), Double.parseDouble(thislat.getText().toString()), Double.parseDouble(thisLon.getText().toString()), thisDescr.getText().toString());
                     tweetStatus = postOnTwitter(setFormatTweetArticle(newObject));
                     //aggiungo l'oggetto nuovo all'arraylist
                     newObject.setTwitterId(tweetStatus.getId());
@@ -257,8 +262,6 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                 if (location != null) {
                     latitude = location.getLatitude();
                     longitude = location.getLongitude();
-                    Toast.makeText(getContext(), String.valueOf(latitude), Toast.LENGTH_SHORT).show();
-                    Toast.makeText(getContext(), String.valueOf(longitude), Toast.LENGTH_SHORT).show();
                     if(dialog){
                         dialogDetailsPost();
                     }
@@ -305,7 +308,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                 }
                 Status tweetStat = null;
                 MainActivity mainActivity = (MainActivity) getActivity();
-                AvailableObjectsData myNewObject= new AvailableObjectsData(name.getText().toString(), "me",mainActivity.getUserid().toString() , category.getText().toString(), Double.valueOf(latString), Double.valueOf(lonString), description.getText().toString());
+                AvailableObjectsData myNewObject= new AvailableObjectsData(name.getText().toString(), username, UUID.randomUUID() , category.getText().toString(), Double.valueOf(latString), Double.valueOf(lonString), description.getText().toString());
                 try {
                     //should make it so that postOnTwitter takes an Available object data
                     tweetStat = postOnTwitter(setFormatTweetArticle(myNewObject));
@@ -359,7 +362,6 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         //Twitter twitter = TwitterFactory.getSingleton();
         Status status = twitter.updateStatus(text);
         System.out.println("Successfully updated the status to [" + status.getText() + "].");
-        mTextView.setText(status.getText());
 
         return status;
     }
@@ -390,21 +392,24 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                     assert mainActivity != null;
 
                     JSONObject jsonObject = new JSONObject(jsonString);
+                    String username1 = jsonObject.get("issuer").toString();
+                    Log.i("cred", username1);
+
                     Log.i("jsonid", jsonObject.get("id").toString());
                     Log.i("jsonid", (String) jsonObject.get("id"));
-                    if (String.valueOf(mainActivity.getUserid()).equals(String.valueOf(jsonObject.get("id")))){
+
+                    if (username.equals(username1)){
                         String name1 = jsonObject.get("name").toString();
                         Log.i("cred", name1);
 
-                        String username1 = jsonObject.get("issuer").toString();
-                        Log.i("cred", username1);
+                        UUID id1 = UUID.fromString(jsonObject.get("id").toString());
 
                         String category = jsonObject.get("category").toString();
                         double lat = Double.parseDouble(jsonObject.get("lat").toString());
                         double lon = Double.parseDouble(jsonObject.get("lon").toString());
                         String description = jsonObject.get("description").toString();
 
-                        AvailableObjectsData myPost = new AvailableObjectsData(name1, username1, String.valueOf(mainActivity.getUserid()), category, lat, lon, description);
+                        AvailableObjectsData myPost = new AvailableObjectsData(name1, username1, id1 , category, lat, lon, description);
                         myPost.setTwitterId(tweet.getId());
                         Log.v("TagSuccc", "str");
 

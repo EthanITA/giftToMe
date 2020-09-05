@@ -1,26 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tw__composer_black"
-    >
+    android:background="@color/tw__composer_black">
 
     <TextView
         android:id="@+id/chat_test"
         android:layout_centerInParent="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="30dp"
-        android:text="replies to your posts"
+        android:textSize="30sp"
+        android:text="@string/replies_to_your_posts"
         android:layout_alignParentTop="true"/>
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/replies_recycler_view"
         android:layout_below="@+id/chat_test"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-
-                />
-
+        />
 
 </RelativeLayout>

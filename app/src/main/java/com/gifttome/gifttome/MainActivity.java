@@ -6,11 +6,19 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.viewpager.widget.ViewPager;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 
 import android.Manifest;
+import android.app.IntentService;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -24,7 +32,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -38,36 +46,42 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.SettingsClient;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
+import com.twitter.sdk.android.core.Callback;
+import com.twitter.sdk.android.core.Result;
+import com.twitter.sdk.android.core.models.Tweet;
+import com.twitter.sdk.android.tweetui.TimelineResult;
+import com.twitter.sdk.android.tweetui.UserTimeline;
+
+import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import twitter4j.Twitter;
+import twitter4j.TwitterFactory;
 
 public class MainActivity extends AppCompatActivity {
-    //da settare lo userid
-    ExecutorService executorService = Executors.newFixedThreadPool(4);
 
+    private AppBarConfiguration mAppBarConfiguration;
+    private int notificationId = 1000;
+    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(4);
     private String username;
-
-    private Integer Userid = 1;
-
-    public Integer getUserid() {
-        return Userid;
-    }
-
-    private Toolbar mToolbar;
-    private ViewPager mViewPager;
-    private TabLayout mTabLayout;
-
-    private TabsAccessAdapter myTabsAccessorAdapter;
-    private String bearerToken;
+    private ArrayList<AvailableObjectsData> availablePosts = new ArrayList<>();
     private ArrayList<AvailableObjectsData> myPosts = new ArrayList<>();
+    private ArrayList<Reply> repliesToMyPosts = new ArrayList<>();
+    private ArrayList<UUID> repliesToMyPostsUUID = new ArrayList<>();
 
     public ArrayList<AvailableObjectsData> getMyPosts() {
         return myPosts;
@@ -85,20 +99,6 @@ public class MainActivity extends AppCompatActivity {
         this.username = username;
     }
 
-    private ArrayList<AvailableObjectsData> availablePosts = new ArrayList<AvailableObjectsData>();
-
-    //messages i ges
-    //private ArrayList<messages>;
-
-    /*public String getBearerToken() {
-        return bearerToken;
-    }
-
-     */
-    public void setBearerToken(String bearerToken) {
-        this.bearerToken = bearerToken;
-    }
-
     //location updates
     private LocationRequest locationRequestMain;
     private FusedLocationProviderClient fusedLocationClientMain;
@@ -110,21 +110,22 @@ public class MainActivity extends AppCompatActivity {
     private PendingIntent geofencePendingIntent;
     LinkedList<Geofence> geofenceList = new LinkedList<>();
 
-
-    //nofification
-    NotificationManagerCompat notificationManagerCompat;
-    int notificationId = 0;
-    FrameLayout fragmentContainer;
-    Intent notificatioIntent;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        //Twitter twitter = TwitterFactory.getSingleton();
+
+        //setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_nav_dra);
+
         SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
         String sharedPrefUsername = sharedPreferences.getString("username", null);
+        //Intent intent = new Intent(this, MyIntentService.class);
+        //startService(intent);
+        //startActivity(i); // For the activity; ignore this for now.
         if(sharedPrefUsername == null){
+            //todo stuff after a user chooses a username
            /*
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -132,14 +133,26 @@ public class MainActivity extends AppCompatActivity {
 
             fragmentTransaction.add(R.id.fragment_container, logInFragment);
             fragmentTransaction.commit();
-
             */
 
-
-           Intent loginIntent = new Intent(this, LoginActivity.class);
-           startActivity(loginIntent);
+            //Intent loginIntent = new Intent(this, LoginActivity.class);
+            //startActivity(loginIntent);
         }
         else {
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            setSupportActionBar(toolbar);
+
+            DrawerLayout drawer = findViewById(R.id.drawer_layout);
+            NavigationView navigationView = findViewById(R.id.nav_view);
+
+            mAppBarConfiguration = new AppBarConfiguration.Builder(
+                    R.id.nav_availableposts, R.id.nav_myposts, R.id.nav_replies_to_me, R.id.nav_my_replies)
+                    .setOpenableLayout(drawer)
+                    .build();
+            NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+            NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+            NavigationUI.setupWithNavController(navigationView, navController);
+
             username = sharedPrefUsername;
             Log.i("sharedPUsernameMainAc", "onCreate: ");
             System.setProperty("twitter4j.oauth.consumerKey", "fud09hdnKuTT7PtYNuCZn2tRV");
@@ -148,26 +161,7 @@ public class MainActivity extends AppCompatActivity {
             System.setProperty("twitter4j.oauth.accessTokenSecret", "AYbNR5QC1pSOxXZHIDLnuiio0X3car8tdSZHVS8dZVvQe");
             System.setProperty("twitter4j.debug", "true");
 
-            //availablePosts.add(new AvailableObjectsData(41.8719, 12.5674));
-            //availablePosts.add(new AvailableObjectsData(36.6772, -122.5022));
-       /* mToolbar = findViewById(R.id.main_page_toolbar);
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setTitle("GiftToMe");
-        */
             geofencingClient = LocationServices.getGeofencingClient(this);
-
-            fragmentContainer = findViewById(R.id.fragment_container);
-
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            MainFragment mainFragment = new MainFragment();
-
-            Bundle bundle = new Bundle();
-            bundle.putString("username", username);
-            mainFragment.setArguments(bundle);
-
-            fragmentTransaction.add(R.id.fragment_container, mainFragment);
-            fragmentTransaction.commit();
 
             fusedLocationClientMain = LocationServices.getFusedLocationProviderClient(this);
             locationCallback = new LocationCallback() {
@@ -175,66 +169,69 @@ public class MainActivity extends AppCompatActivity {
                 public void onLocationResult(LocationResult locationResult) {
                     if (locationResult == null) {
                         Log.v("last location is null", "F");
-
                         return;
                     }
                     lastLocationMain = locationResult.getLastLocation();
                 }
             };
+            /*
+            try {
+                executorService.scheduleAtFixedRate(new Runnable() {
+                    public void run() {
+                        // do stuff
+                        Log.i("insdthrpllsch", "tictoc: ");
+                        checkForRepliesTwitter();
 
-            //sendNotification();
+                    }
+                }, 0, 10, TimeUnit.SECONDS);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e("threadpoolerror", Objects.requireNonNull(e.getMessage()));
+            }
+             */
+
+            WorkRequest checkRepliesWorkRequest = new PeriodicWorkRequest.Builder(checkRepliesWorker.class, 15, TimeUnit.MINUTES).build();
+            WorkManager.getInstance(getApplication()).enqueue(checkRepliesWorkRequest);
+
             makeLocationRequest();
             startLocationUpdates();
-
-            //generateGeofencesForAvailableObjects();
         }
-
     }
 
     protected void makeLocationRequest() {
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(createLocationRequest());
+                .addLocationRequest(createLocationRequest(1500));
 
         SettingsClient client = LocationServices.getSettingsClient(this);
         Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
-        task.addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
-            @Override
-            public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-                // All location settings are satisfied. The client can initialize location requests here.
-            }
+        task.addOnSuccessListener(this, locationSettingsResponse -> {
+            // All location settings are satisfied. The client can initialize location requests here.
         });
 
-        task.addOnFailureListener(this, new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                if (e instanceof ResolvableApiException) {
-                    // Location settings are not satisfied, but this can be fixed
-                    // by showing the user a dialog.
-                    try {
-                        // Show the dialog by calling startResolutionForResult(),
-                        // and check the result in onActivityResult().
-                        ResolvableApiException resolvable = (ResolvableApiException) e;
-                        resolvable.startResolutionForResult(MainActivity.this,
-                                0x1);
-                    } catch (IntentSender.SendIntentException sendEx) {
-                        // Ignore the error.
-                    }
+        task.addOnFailureListener(this, e -> {
+            if (e instanceof ResolvableApiException) {
+                // Location settings are not satisfied
+                try {
+                    // Show the dialog by calling startResolutionForResult() to fix them,
+                    ResolvableApiException resolvable = (ResolvableApiException) e;
+                    resolvable.startResolutionForResult(MainActivity.this,
+                            0x1);
+                } catch (IntentSender.SendIntentException sendEx) {
+                    Toast.makeText(getApplicationContext(), "ricerca della posizione non supportata", Toast.LENGTH_SHORT).show();
+
                 }
             }
         });
-
     }
 
-
-    public LocationRequest createLocationRequest() {
+    public LocationRequest createLocationRequest(long intervalTime) {
         locationRequestMain = LocationRequest.create();
-        locationRequestMain.setInterval(1000);
-        //locationRequest.setFastestInterval(5000);
+        locationRequestMain.setInterval(intervalTime);
         locationRequestMain.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         return locationRequestMain;
     }
-
 
     private void startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -264,29 +261,6 @@ public class MainActivity extends AppCompatActivity {
             fusedLocationClientMain.removeLocationUpdates(locationCallback);
     }
 
-    public void sendNotification() {
-        //tap intent
-        Intent notificatioIntent = new Intent(this, MainActivity.class);
-
-        notificatioIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificatioIntent, 0);
-
-        //create notification
-        notificationManagerCompat = NotificationManagerCompat.from(this);
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, getString(R.string.CHANNEL_ID));
-        mBuilder.setContentTitle("Test Notification")
-                .setContentText("Test Notification Text")
-                .setSmallIcon(R.drawable.notification_template_icon_bg)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true);
-
-        //send notification
-        notificationManagerCompat.notify(notificationId, mBuilder.build());
-        notificationId++;
-
-    }
-
     private void createNotificationChannel() {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
@@ -296,8 +270,7 @@ public class MainActivity extends AppCompatActivity {
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(getString(R.string.CHANNEL_ID), name, importance);
             channel.setDescription(description);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
+
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
@@ -310,7 +283,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public PendingIntent getGeofencePendingIntent() {
-        // Reuse the PendingIntent if we already have it.
         if (geofencePendingIntent != null) {
             return geofencePendingIntent;
         }
@@ -318,10 +290,8 @@ public class MainActivity extends AppCompatActivity {
         Gson gson = new Gson();
         String jsonlist = gson.toJson(availablePosts);
         geoIntent.putExtra("jsonlist", jsonlist);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
-        // calling addGeofences() and removeGeofences().
-        geofencePendingIntent = PendingIntent.getBroadcast(this, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT
-        );
+
+        geofencePendingIntent = PendingIntent.getBroadcast(this, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         return geofencePendingIntent;
     }
 
@@ -373,30 +343,202 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         geofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
-                .addOnSuccessListener(this, new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.i("addOnSuccessListener", "geofence added successfully");
-
-                    }
-                })
-                .addOnFailureListener(this, new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e("addOnFailureListener", "Failure to add geofence");
-                    }
-                });
+                .addOnSuccessListener(this, aVoid -> Log.i("addOnSuccessListener", "geofence added successfully"))
+                .addOnFailureListener(this, e -> Log.e("addOnFailureListener", "Failure to add geofence"));
     }
-
+    //todo
     //to stop geofencing
     //geofencingClient.removeGeofences(getGeofencePendingIntent())
 
     public void addNewAvailablePost(ArrayList<AvailableObjectsData> avObjects){
-        Log.i("addNewAvailablePost", "avObjects size is "+ avObjects.size());
+        geofencingClient.removeGeofences(getGeofencePendingIntent())
         availablePosts.clear();
         availablePosts.addAll(avObjects);
-        Log.i("addNewAvailablePost", "availablePosts size is "+ availablePosts.size());
 
         generateGeofencesForAvailableObjects();
     }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
+                || super.onSupportNavigateUp();
+    }
+
+
+    private void checkForRepliesTwitter() {
+        Twitter twitter = TwitterFactory.getSingleton();
+
+        Log.i("insdthrpllsch", "dentro checkforreplies: ");
+        UserTimeline userTimeline = new UserTimeline.Builder().screenName("GiftToME5")
+                .includeRetweets(false)
+                .maxItemsPerRequest(200)
+                .build();
+        Log.i("insdthrpllsch", "dentro checkforreplies2: ");
+
+        userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
+            @Override
+            public void success(Result<TimelineResult<Tweet>> searchResult)
+            {
+                Log.i("insdthrpllsch", "dentro callback");
+                List<Tweet> tweets = searchResult.data.items;
+                long maxId = 0;
+                UUID repliedToId;
+                for (Tweet tweet : tweets){
+                    String jsonString = tweet.text;
+                    if(!jsonString.contains("#LAM_giftToMe_2020-article"))
+                        continue;
+
+                    for (AvailableObjectsData myPost: myPosts ){
+                        JSONObject jsonObject = null;
+                        try {
+                            jsonObject = new JSONObject(jsonString);
+                            UUID targetId = UUID.fromString(String.valueOf(jsonObject.get("target")));
+                            UUID replyId = UUID.fromString(String.valueOf(jsonObject.get("id")));
+                            //se ho una risposta nuova
+                            if(myPost.getId().equals(targetId) && !repliesToMyPostsUUID.contains(replyId)){
+                                String textReply = String.valueOf(jsonObject.get("message"));
+                                sendNotification(getApplication(), myPost, textReply);
+                            }
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }}
+                Log.i("srchdcl", "successful search: ");
+            }
+
+            @Override
+            public void failure(com.twitter.sdk.android.core.TwitterException error) {
+                Log.e("TAG","Error");
+                Toast.makeText(getApplication(), "problema di connessione", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    Callback<TimelineResult<Tweet>> mainCallback = new Callback<TimelineResult<Tweet>>() {
+        @Override
+        public void success(Result<TimelineResult<Tweet>> searchResult)
+        {
+            Log.i("insdthrpllsch", "dentro callback");
+
+            List<Tweet> tweets = searchResult.data.items;
+            long maxId = 0;
+            UUID repliedToId;
+            for (Tweet tweet : tweets){
+                String jsonString = tweet.text;
+                if(!jsonString.contains("#LAM_giftToMe_2020-article"))
+                    continue;
+
+                for (AvailableObjectsData myPost: myPosts ){
+                    JSONObject jsonObject = null;
+                    try {
+                        jsonObject = new JSONObject(jsonString);
+                        UUID targetId = UUID.fromString(String.valueOf(jsonObject.get("target")));
+                        UUID replyId = UUID.fromString(String.valueOf(jsonObject.get("id")));
+                        //se ho una risposta nuova
+                        if(myPost.getId().equals(targetId) && !repliesToMyPostsUUID.contains(replyId)){
+                            String textReply = String.valueOf(jsonObject.get("message"));
+                            sendNotification(getApplication(), myPost, textReply);
+                            sendNotification(getApplication(), myPost, textReply);
+                            repliesToMyPostsUUID.add(replyId);
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }}
+            Log.i("srchdcl", "successful search: ");
+        }
+
+        @Override
+        public void failure(com.twitter.sdk.android.core.TwitterException error) {
+            Log.e("TAG","Error");
+            Toast.makeText(getApplication(), "problema di connessione", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+
+    public void sendNotification(Context context, AvailableObjectsData myNotifiedPost,
+                                 String replyText){
+        //tap intent todo
+
+        Log.i("insdthrpllsch", "dentro sendNotification");
+
+        Intent notificationIntent = new Intent(context, MainActivity.class);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK );
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 1, notificationIntent, 0);
+
+        //create notification
+        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, String.valueOf(R.string.CHANNEL_ID));
+        mBuilder.setContentTitle("Hai ricevuto un nuovo messaggio per l'oggetto " + myNotifiedPost.getName() + "!")
+                .setContentText(replyText)
+                .setSmallIcon(R.drawable.notification_template_icon_bg)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(false);
+
+        //send notification
+        notificationManagerCompat.notify(notificationId, mBuilder.build());
+        notificationId++;
+    }
+
+    public void responseNotification(){
+        executorService.scheduleAtFixedRate(new Runnable() {
+            public void run() {
+                // do stuff
+                Log.i("insdthrpllsch", "tictoc: ");
+                checkForRepliesTwitter();
+
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        // update your UI component here.
+
+                    }
+                });
+            }
+        }, 0, 10, TimeUnit.SECONDS);
+    }
+    public static class checkRepliesWorker extends Worker {
+        public checkRepliesWorker(
+                @NonNull Context context,
+                @NonNull WorkerParameters params) {
+            super(context, params);
+        }
+
+        @NotNull
+        @Override
+        public Result doWork() {
+
+            // Do the work here--
+            Log.i("insd", "dentro checkrepliesworker dowork: ");
+            //checkForRepliesTwitter();
+
+            // Indicate whether the work finished successfully with the Result
+            return Result.success();
+        }
+    }
+
+    public static class CheckForReplies extends IntentService {
+
+        public CheckForReplies(String name) {
+            super(name);
+        }
+        public CheckForReplies() {
+            super("default");
+        }
+
+
+        @Override
+        protected void onHandleIntent(Intent workIntent) {
+            // Gets data from the incoming Intent
+            checkForRepliesTwitter()
+            //Do work here, based on the contents of dataString
+
+        }
 }
+
+
+}
+

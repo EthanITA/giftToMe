@@ -3,23 +3,33 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_home">
+    app:startDestination="@+id/nav_availableposts">
 
     <fragment
-        android:id="@+id/nav_home"
-        android:name="com.gifttome.gifttome.ui.home.HomeFragment"
-        android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
+        android:id="@+id/nav_availableposts"
+        android:name="com.gifttome.gifttome.AvailablePostsFragment"
+        android:label="Oggetti disponibili"
+        tools:layout="@layout/fragment_available_posts" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.gifttome.gifttome.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        android:id="@+id/nav_myposts"
+        android:name="com.gifttome.gifttome.MyPostsFragment"
+        android:label="I tuoi oggetti"
+        tools:layout="@layout/fragment_my_posts" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.gifttome.gifttome.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        android:id="@+id/nav_replies_to_me"
+        android:name="com.gifttome.gifttome.RepliesToMeFragment"
+        android:label="Risposte interessate ai tuoi oggetti" />
+
+    <fragment
+        android:id="@+id/nav_my_replies"
+        android:name="com.gifttome.gifttome.MyRepliesFragment"
+        android:label="Le tue risposte a oggetti che ti interessano"
+        />
+    <fragment
+        android:id="@+id/nav_single_chat"
+        android:name="com.gifttome.gifttome.SingleChatFragment"
+        android:label="Chat"
+        />
 </navigation>

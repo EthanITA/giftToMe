@@ -12,24 +12,6 @@ public class AvailableObjectsData {
     private String description;
     private long twitterId;
 
-    public  AvailableObjectsData(String name, String issuer){
-        this.name = name;
-        this.issuer = issuer;
-        this.id = null;
-        this.category = null;
-        this.lat = null;
-        this.lon = null;
-        this.description = null;
-    }
-    public  AvailableObjectsData(double latitude, double longitude){
-        this.name = "name";
-        this.issuer = "issuer";
-        this.id = null;
-        this.category = null;
-        this.lat = latitude;
-        this.lon = longitude;
-        this.description = "description";
-    }
     public  AvailableObjectsData(String name, String issuer, UUID id,
                                  String category, double lat,
                                  double lon, String description){
@@ -62,16 +44,8 @@ public class AvailableObjectsData {
         return issuer;
     }
 
-    public void setIssuer(String issuer) {
-        this.issuer = issuer;
-    }
-
     public String getCategory() {
         return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
     }
 
     public String getName() {
@@ -86,23 +60,11 @@ public class AvailableObjectsData {
         return lat;
     }
 
-    public void setLat(Double lat) {
-        this.lat = lat;
-    }
-
     public Double getLon() {
         return lon;
     }
 
-    public void setLon(Double lon) {
-        this.lon = lon;
-    }
-
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 }

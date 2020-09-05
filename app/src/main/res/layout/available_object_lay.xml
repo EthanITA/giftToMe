@@ -2,14 +2,19 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-
     xmlns:tools="http://schemas.android.com/tools">
 
-
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray"
+        android:layout_alignParentTop="true"
+        />
     <TextView
         android:id="@+id/object_name"
-        android:textSize="20dp"
+        android:textSize="20sp"
         android:paddingStart="20dp"
+        android:paddingEnd="20dp"
         android:layout_marginStart="30dp"
         tools:text="name"
         android:padding="6dp"
@@ -19,6 +24,7 @@
         android:id="@+id/username"
         tools:text="username"
         android:paddingStart="80dp"
+        android:paddingEnd="80dp"
         android:paddingBottom="5dp"
         android:layout_below="@+id/object_name"
         android:layout_width="match_parent"
@@ -28,6 +34,7 @@
         android:id="@+id/category"
         tools:text="category"
         android:paddingStart="80dp"
+        android:paddingEnd="80dp"
         android:paddingBottom="5dp"
         android:layout_below="@+id/username"
         android:layout_width="match_parent"
@@ -40,6 +47,7 @@
         android:id="@+id/description"
         tools:text="description"
         android:paddingStart="80dp"
+        android:paddingEnd="80dp"
         android:paddingBottom="5dp"
         android:layout_below="@+id/category"
         android:layout_width="match_parent"
@@ -52,6 +60,7 @@
         android:id="@+id/lon"
         tools:text="lon"
         android:paddingStart="80dp"
+        android:paddingEnd="80dp"
         android:paddingBottom="5dp"
         android:layout_below="@+id/description"
         android:layout_width="wrap_content"
@@ -64,10 +73,8 @@
     <TextView
         android:id="@+id/lat"
         tools:text="lat"
-        android:paddingStart="80dp"
-        android:paddingEnd="80dp"
         android:paddingBottom="5dp"
-        android:layout_toRightOf="@+id/lon"
+        android:layout_toEndOf="@+id/lon"
         android:layout_below="@+id/description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -98,7 +105,12 @@
         tools:visibility="visible"/>
 
 
-
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.1dp"
+        android:background="@android:color/darker_gray"
+        android:layout_alignParentBottom="true"
+        />
 
 
 </RelativeLayout>

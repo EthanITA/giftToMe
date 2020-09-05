@@ -5,10 +5,10 @@
 
     <TextView
         android:id="@+id/tv_cat"
-        android:text="Seleziona categoria"
+        android:text="@string/seleziona_categoria"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="10dp"
         />
     <com.google.android.material.textfield.TextInputEditText
@@ -20,7 +20,7 @@
         />
     <TextView
         android:id="@+id/tv_name"
-        android:text="Seleziona nome"
+        android:text="@string/nome_oggetto"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/post_category"
@@ -32,11 +32,11 @@
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_centerInParent="true"
-            android:layout_below="@+id/tv_name"
+        android:layout_below="@+id/tv_name"
         />
     <TextView
         android:id="@+id/tv_desc"
-        android:text="Descrizione"
+        android:text="@string/descrizione"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/post_name"
@@ -48,11 +48,11 @@
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_centerInParent="true"
-            android:layout_below="@+id/tv_desc"
+        android:layout_below="@+id/tv_desc"
         />
     <TextView
         android:id="@+id/tv_lon"
-        android:text="Latitudine "
+        android:text="@string/latitudine"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/post_description"
@@ -65,11 +65,11 @@
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_centerInParent="true"
-            android:layout_below="@+id/tv_lon"
+        android:layout_below="@+id/tv_lon"
         />
     <TextView
         android:id="@+id/tv_lat"
-        android:text="Longitudine "
+        android:text="@string/longitudine"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/post_lat"
@@ -81,7 +81,7 @@
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_centerInParent="true"
-            android:layout_below="@+id/tv_lat"
+        android:layout_below="@+id/tv_lat"
         />
 
 </RelativeLayout>

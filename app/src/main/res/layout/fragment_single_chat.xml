@@ -6,17 +6,15 @@
     tools:context=".SingleChatFragment">
 
 
-
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/chat_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:elevation="4dp"
-        />
+<TextView
+    android:id="@+id/titel"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chat_recycler_view"
-        android:layout_below="@+id/chat_toolbar"
+        android:layout_below="@+id/titel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/message_to_send"
@@ -25,18 +23,18 @@
     <EditText
         android:id="@+id/message_to_send"
         android:layout_alignParentBottom="true"
-        android:hint="scrivi un messaggio"
+        android:hint="@string/scrivi_un_messaggio"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toStartOf="@+id/send_button"
         android:layout_alignParentStart="true"
         android:layout_marginBottom="10dp"
-
-        />
+        android:inputType="text"
+        android:autofillHints="" />
 
     <Button
         android:id="@+id/send_button"
-        android:text="invia"
+        android:text="@string/send"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"

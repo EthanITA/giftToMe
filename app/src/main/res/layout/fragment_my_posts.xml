@@ -17,7 +17,7 @@
 
 
     <Button
-        android:text="Post your object"
+        android:text="@string/post_your_object"
         android:id="@+id/test_button_my_post_twitter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -25,8 +25,5 @@
         android:layout_centerInParent="true"
         android:layout_alignParentBottom="true"
     />
-
-
-
 
 </RelativeLayout>

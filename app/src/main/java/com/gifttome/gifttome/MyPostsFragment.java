@@ -2,11 +2,17 @@ package com.gifttome.gifttome;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
+import android.os.StrictMode;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -15,23 +21,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.StrictMode;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
-
-
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -50,7 +41,6 @@ import org.json.JSONObject;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import twitter4j.Status;
@@ -68,28 +58,13 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
     private EditText lon;
     private double latitude;
     private double longitude;
-        //t4j
-    Twitter twitter = TwitterFactory.getSingleton();
 
-    public MyPostsAdapter getmAdapter() {
-        return mAdapter;
-    }
+    //t4j
+    private Twitter twitter = TwitterFactory.getSingleton();
 
-    private RecyclerView recyclerView;
     private MyPostsAdapter mAdapter;
-    private RecyclerView.LayoutManager layoutManager;
     private ArrayList<AvailableObjectsData> myPostsList = new ArrayList<>();
     private UserTimeline userTimeline;
-
-    LocationCallback mLocationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            for (Location location : locationResult.getLocations()) {
-                // Update UI with location data
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-            }
-        } };
     private FusedLocationProviderClient mFusedLocationClient;
 
     public MyPostsFragment() {
@@ -103,7 +78,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
     }
 
     private void saveData() {
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Gson gson = new Gson();
         String json = gson.toJson(myPostsList);
@@ -112,7 +87,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
     }
 
     private void loadData(){
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
         Gson gson = new Gson();
         String json = sharedPreferences.getString("objects data list", null);
         Type type = new TypeToken<ArrayList<AvailableObjectsData>>() {}.getType();
@@ -125,42 +100,30 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View thisFragment = inflater.inflate(R.layout.fragment_my_posts, container, false);
-        recyclerView = thisFragment.findViewById(R.id.my_posts_recyclerview);
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        RecyclerView recyclerView = thisFragment.findViewById(R.id.my_posts_recyclerview);
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
         username = sharedPreferences.getString("username", null);
-        /*if (getArguments() == null)
-            Log.i("getArguments", "getArguments is null ");
-        username  =  getArguments().getString("username");
-         */
+
         //in initialize()
         //twitter e display di tweets
-        TwitterConfig config = new TwitterConfig.Builder(getContext())
+        TwitterConfig config = new TwitterConfig.Builder(requireContext())
                 .logger(new DefaultLogger(Log.DEBUG))
                 .twitterAuthConfig(new TwitterAuthConfig("fud09hdnKuTT7PtYNuCZn2tRV", "gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp"))
                 .debug(true)
                 .build();
         com.twitter.sdk.android.core.Twitter.initialize(config);
 
-        layoutManager = new LinearLayoutManager(getActivity());
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
-        mAdapter = new MyPostsAdapter(myPostsList, this, this);
-        //mAdapter.setClickListener(this::onClick);
-        //Log.i("clicklistener", );
+        mAdapter = new MyPostsAdapter(myPostsList, this);
         recyclerView.setAdapter(mAdapter);
         mAdapter.notifyDataSetChanged();
 
-        //farea richiesta del gps
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(Objects.requireNonNull(getActivity()));
-        //mFusedLocationClient.requestLocationUpdates(mLocationRequest,mLocationCallback,null /* Looper */);  /* can use Looper.getMainLooper(); */
+        //richiesta del gps
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
         mButtton = thisFragment.findViewById(R.id.test_button_my_post_twitter);
-        mButtton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                longitudineLatitudine(true);
-            }
-        });
+        mButtton.setOnClickListener(v -> longitudineLatitudine(true));
 
         getMyPostsTweets();
 
@@ -169,7 +132,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
 
     public void modifyPost(final int position) {
         AvailableObjectsData object = myPostsList.get(position);
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Modifica Post");      // set the custom layout
         View thisDialog = getLayoutInflater().inflate(R.layout.post_object_on_twitter, null);
 
@@ -189,45 +152,45 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         thisLon.setText(String.valueOf(object.getLon()));
 
         builder.setView(thisDialog);
-        builder.setPositiveButton("Modifica Post", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-                StrictMode.setThreadPolicy(policy);
+        builder.setPositiveButton("Modifica Post", (dialog, which) -> {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
 
-                //Twitter twitter = TwitterFactory.getSingleton();
-                //rimuovo l'oggetto vecchio dall'arraylist
-                UUID oldUUID = myPostsList.get(position).getId();
-                myPostsList.remove(position);
+            //Twitter twitter = TwitterFactory.getSingleton();
+            //rimuovo l'oggetto vecchio dall'arraylist
+            UUID oldUUID = myPostsList.get(position).getId();
+            myPostsList.remove(position);
+            mAdapter.notifyDataSetChanged();
+            Status tweetStatus;
+            try {
+                //cancello il tweet dell'oggetto vecchio
+                twitter.tweets().destroyStatus(object.getTwitterId());
+                //posto il tweet dell'oggetto nuovo
+                String nameString = thisName.getText() == null? "" : thisName.getText().toString();
+                String categoryString = thisCategory.getText() == null? "" : thisCategory.getText().toString();
+                String lonString = thisLon.getText() == null? "" : thisLon.getText().toString();
+                String latString = thislat.getText() == null? "" : thislat.getText().toString();
+                String descrString = thisDescr.getText() == null? "" : thisDescr.getText().toString();
+
+                AvailableObjectsData newObject = new AvailableObjectsData(nameString, username , oldUUID, categoryString,
+                        Double.parseDouble(latString), Double.parseDouble(lonString),descrString);
+
+                tweetStatus = postOnTwitter(setFormatTweetArticle(newObject));
+                //aggiungo l'oggetto nuovo all'arraylist
+                newObject.setTwitterId(tweetStatus.getId());
+                myPostsList.add(newObject);
+
                 mAdapter.notifyDataSetChanged();
-                Status tweetStatus;
-                try {
-                    //cancello il tweet dell'oggetto vecchio
-                    twitter.tweets().destroyStatus(object.getTwitterId());
-                    //posto il tweet dell'oggetto nuovo
+                Toast.makeText(getActivity(), "Post modificato", Toast.LENGTH_SHORT).show();
 
-                    AvailableObjectsData newObject = new AvailableObjectsData(thisName.getText().toString(), username , oldUUID, thisCategory.getText().toString(), Double.parseDouble(thislat.getText().toString()), Double.parseDouble(thisLon.getText().toString()), thisDescr.getText().toString());
-                    tweetStatus = postOnTwitter(setFormatTweetArticle(newObject));
-                    //aggiungo l'oggetto nuovo all'arraylist
-                    newObject.setTwitterId(tweetStatus.getId());
-                    myPostsList.add(newObject);
+            } catch (TwitterException | JSONException e) {
+                e.printStackTrace();
+                Toast.makeText(getActivity(), "errore nella modifica del post", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "possibile assenza di connessione", Toast.LENGTH_SHORT).show();
 
-                    mAdapter.notifyDataSetChanged();
-                    Toast.makeText(getActivity(), "Post modificato", Toast.LENGTH_SHORT).show();
-
-                } catch (TwitterException | JSONException e) {
-                    e.printStackTrace();
-                    tweetStatus = null;
-                }
             }
         });
-        builder.setNeutralButton("Cancella post", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                removeObject(position);
-            }
-
-        });
+        builder.setNeutralButton("Cancella post", (dialog, which) -> removeObject(position));
         builder.setNegativeButton("annulla", null);
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -252,26 +215,23 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
 
     public void longitudineLatitudine(final Boolean dialog) {
         //ask permission to access location if not already granted
-        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // Permission is not granted
-            ActivityCompat.requestPermissions(getActivity(),new String[]{Manifest.permission.ACCESS_FINE_LOCATION},123);
+            ActivityCompat.requestPermissions(requireActivity(),new String[]{Manifest.permission.ACCESS_FINE_LOCATION},123);
         }
-        mFusedLocationClient.getLastLocation().addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if (location != null) {
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                    if(dialog){
-                        dialogDetailsPost();
-                    }
+        mFusedLocationClient.getLastLocation().addOnSuccessListener(requireActivity(), location -> {
+            if (location != null) {
+                latitude = location.getLatitude();
+                longitude = location.getLongitude();
+                if(dialog){
+                    newObjectDialog();
                 }
             }
         });
     }
 
-    private void dialogDetailsPost() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+    private void newObjectDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Seleziona i dettagli dell'oggetto che vuoi regalare");      // set the custom layout
         final View thisDialog = getLayoutInflater().inflate(R.layout.post_object_on_twitter, null);
         //prendo i valori longitudine e latitudine
@@ -279,47 +239,40 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         lon = thisDialog.findViewById(R.id.post_lon);
         lat.setText(String.valueOf(latitude));
         lon.setText(String.valueOf(longitude));
-        Toast.makeText(getContext(), String.valueOf(latitude), Toast.LENGTH_SHORT).show();
 
         builder.setView(thisDialog);
-        builder.setPositiveButton("POST", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                category = (thisDialog.findViewById(R.id.post_category));
-                String categoryString = category.getText().toString();
+        builder.setPositiveButton("POST", (dialog, which) -> {
+            category = (thisDialog.findViewById(R.id.post_category));
+            description = thisDialog.findViewById(R.id.post_description);
+            name = thisDialog.findViewById(R.id.post_name);
 
-                description = thisDialog.findViewById(R.id.post_description);
-
-                name = thisDialog.findViewById(R.id.post_name);
-
-                String latString;
-                if(!lat.getText().toString().equals("")){
-                    latString = lat.getText().toString();
-                }
-                else{
-                    latString = String.valueOf(latitude);}
-
-                String lonString;
-                if(!lon.getText().toString().equals("")){
-                    lonString = lon.getText().toString();
-                }
-                else{
-                    lonString = String.valueOf(longitude);
-                }
-                Status tweetStat = null;
-                MainActivity mainActivity = (MainActivity) getActivity();
-                AvailableObjectsData myNewObject= new AvailableObjectsData(name.getText().toString(), username, UUID.randomUUID() , category.getText().toString(), Double.valueOf(latString), Double.valueOf(lonString), description.getText().toString());
-                try {
-                    //should make it so that postOnTwitter takes an Available object data
-                    tweetStat = postOnTwitter(setFormatTweetArticle(myNewObject));
-                    myPostsList.add(myNewObject);
-                    myNewObject.setTwitterId(tweetStat.getId());
-                    mAdapter.notifyDataSetChanged();
-                } catch (TwitterException | JSONException e) {
-                    e.printStackTrace();
-                }
-
+            String latString;
+            if(!lat.getText().toString().equals("")){
+                latString = lat.getText().toString();
             }
+            else{
+                latString = String.valueOf(latitude);}
+
+            String lonString;
+            if(!lon.getText().toString().equals("")){
+                lonString = lon.getText().toString();
+            }
+            else{
+                lonString = String.valueOf(longitude);
+            }
+            Status tweetStat;
+            AvailableObjectsData myNewObject= new AvailableObjectsData(name.getText().toString(), username, UUID.randomUUID() , category.getText().toString(), Double.parseDouble(latString), Double.parseDouble(lonString), description.getText().toString());
+            try {
+                tweetStat = postOnTwitter(setFormatTweetArticle(myNewObject));
+                myPostsList.add(myNewObject);
+                myNewObject.setTwitterId(tweetStat.getId());
+                mAdapter.notifyDataSetChanged();
+            } catch (TwitterException | JSONException e) {
+                e.printStackTrace();
+                Toast.makeText(getActivity(), "errore nell'upload del post", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "possibile assenza di connessione", Toast.LENGTH_SHORT).show();
+            }
+
         });
         builder.setNegativeButton("annulla", null);
         AlertDialog dialog = builder.create();
@@ -327,19 +280,6 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         dialog.show();
     }
 
-    public String setFormatTweetArticle(String name, String category, String description, String lat, String lon) throws JSONException {
-        String tweet = "#LAM_giftToMe_2020-article \n";
-        JSONObject json =  new JSONObject();
-        json.put("id", "id");
-        json.put("issuer", "issuer");
-        json.put("category", category);
-        json.put("name", name);
-        json.put("lat", lat);
-        json.put("lon", lon);
-        json.put("description", description);
-        tweet = tweet + json.toString(1);
-        return tweet;
-    }
     public String setFormatTweetArticle(AvailableObjectsData object) throws JSONException {
         String string = "#LAM_giftToMe_2020-article \n";
         JSONObject json =  new JSONObject();
@@ -389,7 +329,6 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                 try {
                     //MANCA ID TRA LE COSE
                     MainActivity mainActivity = (MainActivity) getActivity();
-                    assert mainActivity != null;
 
                     JSONObject jsonObject = new JSONObject(jsonString);
                     String username1 = jsonObject.get("issuer").toString();
@@ -413,8 +352,6 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                         myPost.setTwitterId(tweet.getId());
                         Log.v("TagSuccc", "str");
 
-
-                        //DA MODIFICARE COMDIZIONI CON CUI FILTRARE I POST USANDO ID
                         if (!name1.equals("") && !username1.equals(""))
                             myPostsList.add(myPost);
                         Log.v("credd1", String.valueOf(myPostsList.size()));
@@ -423,11 +360,10 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                     e.printStackTrace();
                 }
                 maxId = tweet.id;
-
             }
 
             mAdapter.notifyDataSetChanged();
-            Log.v("credd2", String.valueOf(myPostsList.size()));
+            Log.v("credd2Myposts", String.valueOf(myPostsList.size()));
 
             //da ricontrollare
             if (searchResult.data.items.size() == 100) {
@@ -438,6 +374,8 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         public void failure(com.twitter.sdk.android.core.TwitterException error)
         {
             Log.e("TAG","Error");
+            Toast.makeText(getActivity(), "errore, controllare la connessione ad internet", Toast.LENGTH_SHORT).show();
+
         }
     };
 

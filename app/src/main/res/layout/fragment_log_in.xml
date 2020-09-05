@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Scegli uno username"
+        android:text="@string/scegli_uno_username"
         android:layout_above="@+id/login_username"
         android:layout_centerInParent="true"
         android:layout_margin="30dp"
@@ -19,14 +19,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:hint="username"
+        android:hint="@string/username"
+        android:inputType="text"
         />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/username_already_taken_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Username già utilizzato, scegline un'altro"
+        android:text="@string/bad_username"
         android:textColor="@color/tw__composer_red"
         android:layout_below="@+id/login_username"
         android:layout_centerInParent="true"
@@ -41,7 +42,7 @@
         android:layout_centerInParent="true"
         android:layout_below="@+id/login_username"
         android:layout_margin="15dp"
-        android:text="Seleziona"
+        android:text="@string/seleziona"
         />
 
 </RelativeLayout>

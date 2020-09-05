@@ -12,9 +12,6 @@ import java.util.UUID;
         "target ": "9a61bc0c -ce39 -4d3b -b72d -e63af675522a",
         "receiver ": "username",
         "message ": "Ciao , sono  interessato ."
-        }
-
-
 */
 
 public class Reply{
@@ -27,16 +24,15 @@ public class Reply{
     private Long twitterId;
     private Long replyToId;
     private AvailableObjectsData objectRepliedTo;
-
+    private boolean objectRepliedToIsDeleted;
 
     public AvailableObjectsData getObjectRepliedTo() {
-        return objectRepliedTo;
+        return this.objectRepliedTo;
     }
 
     public void setObjectRepliedTo(AvailableObjectsData objectRepliedTo) {
         this.objectRepliedTo = objectRepliedTo;
     }
-
 
     public Long getReplyToId() {
         return replyToId;
@@ -66,10 +62,6 @@ public class Reply{
         return sender;
     }
 
-    public void setSender(String sender) {
-        this.sender = sender;
-    }
-
     public UUID getTargetid() {
         return targetid;
     }
@@ -80,10 +72,6 @@ public class Reply{
 
     public String getReceiver() {
         return receiver;
-    }
-
-    public void setReceiver(String receiver) {
-        this.receiver = receiver;
     }
 
     public String getMessage() {
@@ -100,10 +88,11 @@ public class Reply{
         this.targetid = targetid;
         this.receiver = receiver;
         this.message = message;
+        this.objectRepliedTo = null;
     }
 
     public String formatToString() throws JSONException {
-        String string = "#LAM_giftToMe_2020-article \n";
+        String string = "#LAM_giftToMe_2020 -reply \n";
         JSONObject json =  new JSONObject();
         json.put("id", this.getId());
         json.put("sender", this.getSender());

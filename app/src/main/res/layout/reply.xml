@@ -4,6 +4,13 @@
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.1dp"
+        android:background="@android:color/darker_gray"
+        android:layout_alignParentBottom="true"
+        />
+
     <TextView
         android:id="@+id/object_replied_to"
         android:layout_width="wrap_content"
@@ -13,25 +20,28 @@
         android:layout_margin="10dp"
         />
 
-        <TextView
+    <TextView
         android:id="@+id/replier_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="20sp"
         tools:text= "REPLY IS FROM: NAME"
         android:layout_margin="8dp"
-            android:layout_below="@+id/object_replied_to"
-            android:layout_centerInParent="true"
+        android:layout_below="@+id/object_replied_to"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentStart="true"
+        android:paddingStart="15dp"
+        android:paddingEnd="15dp"
         />
-        <TextView
+    <TextView
         android:id="@+id/reply_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="20sp"
         tools:text= "REPLY IS FROM: NAME"
         android:layout_margin="8dp"
-            android:layout_below="@+id/replier_name"
-            android:layout_centerInParent="true"
+        android:layout_below="@+id/replier_name"
+        android:layout_centerInParent="true"
         />
 
     <Button
@@ -40,7 +50,13 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/reply_message"
         android:layout_centerInParent="true"
-        android:text="do stuff"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.1dp"
+        android:background="@android:color/darker_gray"
+        android:layout_alignParentBottom="true"
         />
 
 

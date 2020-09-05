@@ -9,8 +9,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.FrameLayout;
-
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
@@ -40,52 +38,41 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             intentBundle.get("jsonlist");
             Gson gson = new Gson();
             String json = intentBundle.getString("jsonlist");
-            Log.i("arraylistdabrodrec", json);
-            Type type = new TypeToken<ArrayList<AvailableObjectsData>>() {}.getType();
-            postsList = gson.fromJson(json, type);
+            if(json != null) {
+                Log.i("arraylistdabrodrec", json);
+                Type type = new TypeToken<ArrayList<AvailableObjectsData>>() {
+                }.getType();
+                postsList = gson.fromJson(json, type);
+            }
         }
+
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
-            if (geofencingEvent.hasError()) {
-                String errorMessage = GeofenceStatusCodes.getStatusCodeString(geofencingEvent.getErrorCode());
-                Log.e("geofencingEvent Error", errorMessage);
-                return;
-            }
-
-            // Get the transition type.
-            int geofenceTransition = geofencingEvent.getGeofenceTransition();
-
-            // Test that the reported transition was of interest.
-            if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||geofenceTransition == Geofence.GEOFENCE_TRANSITION_DWELL) {
-
-                // Get the geofences that were triggered. A single event can trigger
-                // multiple geofences.
-                List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
-                // Get the transition details as a String.
-                /*String geofenceTransitionDetails = getGeofenceTransitionDetails(
-                        this,
-                        geofenceTransition,
-                        triggeringGeofences
-                );
-                 */
-                for (Geofence geofence :
-                        triggeringGeofences) {
-
-                    Log.i("trigg geofence", geofence.getRequestId().toString());
-
-                    sendNotification(context, Integer.parseInt(geofence.getRequestId()));
-                }
-                // Send notification and log the transition details.
-                //sendNotification(geofenceTransitionDetails);
-                Log.i("geofencinglocation", String.valueOf(geofencingEvent.getTriggeringLocation()));
-            } else {
-                // Log the error.
-                Log.e("Geofencetransition","error");
-            }
+        if (geofencingEvent.hasError()) {
+            String errorMessage = GeofenceStatusCodes.getStatusCodeString(geofencingEvent.getErrorCode());
+            Log.e("geofencingEvent Error", errorMessage);
+            return;
         }
+        int geofenceTransition = geofencingEvent.getGeofenceTransition();
+
+        // Transizione di entrata nell'area del geofence
+        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||geofenceTransition == Geofence.GEOFENCE_TRANSITION_DWELL) {
+            // Geofences attivati, invio notifica
+            List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+            for (Geofence geofence : triggeringGeofences) {
+                Log.i("trigggeofence", geofence.getRequestId());
+                sendNotification(context, Integer.parseInt(geofence.getRequestId()));
+            }
+            Log.i("geofencinglocation", String.valueOf(geofencingEvent.getTriggeringLocation()));
+        }
+        else {
+            // Log the error.
+            Log.e("Geofencetransition","error");
+        }
+    }
 
 
     public void sendNotification(Context context, int id){
-        //tap intent
+        //tap intent todo
         notificationIntent = new Intent(context, MainActivity.class);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
@@ -103,12 +90,9 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         //send notification
         notificationManagerCompat.notify(notificationId, mBuilder.build());
         notificationId++;
-
     }
 
     private void createNotificationChannel(Context context) {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = String.valueOf(R.string.channel_name);
             String description = String.valueOf(R.string.channel_description);
@@ -116,13 +100,9 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             NotificationChannel channel = new NotificationChannel(String.valueOf(R.string.CHANNEL_ID), name, importance);
             Log.i("Channel_ID in broad rec", String.valueOf(R.string.CHANNEL_ID));
             channel.setDescription(description);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
+
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
     }
-
-
-
-    }
+}

@@ -14,13 +14,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
-        <activity
-            android:name=".MainActivityNavDra"
-            android:label="@string/title_activity_main_nav_dra"
-            android:theme="@style/AppTheme.NoActionBar" >
-        </activity>
-        <activity android:name=".LoginActivity" />
 
+        <activity android:name=".LoginActivity" />
+        <service android:name=".CheckForReplies"
+            android:exported="false"
+            />
         <receiver
             android:name=".GeofenceBroadcastReceiver"
             android:exported="false" />

@@ -28,6 +28,7 @@ import com.twitter.sdk.android.core.models.Tweet;
 import com.twitter.sdk.android.tweetui.TimelineResult;
 import com.twitter.sdk.android.tweetui.UserTimeline;
 
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -45,7 +46,6 @@ import twitter4j.TwitterFactory;
 public class SingleChatFragment extends Fragment {
 
     Twitter twitter = TwitterFactory.getSingleton();
-    private String currentUser = "CurrentUser";
 
     private ArrayList<Reply> messageList = new ArrayList<>();
     private AvailableObjectsData mainArticle;
@@ -55,26 +55,19 @@ public class SingleChatFragment extends Fragment {
     private Button sendMesssageButton;
     private EditText textToSend;
 
-    private RecyclerView recyclerView;
-    private RecyclerView.LayoutManager layoutManager;
     private ChatAdapter chatAdapter;
-
 
     public SingleChatFragment() {
         // Required empty public constructor
     }
 
-
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View thisFragment = inflater.inflate(R.layout.fragment_single_chat, container, false);
-        Toolbar myToolbar = (Toolbar) thisFragment.findViewById(R.id.chat_toolbar);
-        myToolbar.setTitle("mainArticle.getName()");
 
-        TwitterConfig config = new TwitterConfig.Builder(getContext())
+        TwitterConfig config = new TwitterConfig.Builder(requireContext())
                 .logger(new DefaultLogger(Log.DEBUG))
                 .twitterAuthConfig(new TwitterAuthConfig("fud09hdnKuTT7PtYNuCZn2tRV", "gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp"))
                 .debug(true)
@@ -95,13 +88,11 @@ public class SingleChatFragment extends Fragment {
             }
         });
 
-
-        recyclerView = thisFragment.findViewById(R.id.chat_recycler_view);
-        layoutManager = new LinearLayoutManager(getActivity());
+        RecyclerView recyclerView = thisFragment.findViewById(R.id.chat_recycler_view);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
         chatAdapter = new ChatAdapter(messageList, getActivity());
-        //mAdapter.setClickListener(this::onClick);
-        //Log.i("clicklistener", );
+
         recyclerView.setAdapter(chatAdapter);
         chatAdapter.notifyDataSetChanged();
 
@@ -181,8 +172,7 @@ public class SingleChatFragment extends Fragment {
         }
     };
 
-    public Status sendMessageOnTwitter(String text, int position) throws TwitterException, JSONException {
-
+    public void sendMessageOnTwitter(String text, int position) throws TwitterException, JSONException {
 
         Reply newReply = new Reply(UUID.randomUUID(), "this.sender", mainArticle.getId(), mainArticle.getIssuer(), text);
         String textInJsonFormat = newReply.formatToString();
@@ -199,9 +189,7 @@ public class SingleChatFragment extends Fragment {
 
         System.out.println("Successfully updated the status to [" + status.getText() + "].");
 
-        return status;
     }
-
 
     private static class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.SentViewHolder>{
         Integer mExpandedPosition = -1;
@@ -209,24 +197,17 @@ public class SingleChatFragment extends Fragment {
         private static final int VIEW_TYPE_MESSAGE_RECEIVED = 1;
 
         private ArrayList<Reply> messageList = new ArrayList<>();
-        private Context context;
         private static ItemClickListener itemClickListener;
         private  View.OnClickListener buttonClickListener;
         private AvailableObjectsData mainObject;
 
-        // Provide a reference to the views for each data item
-        // Complex data items may need more than one view per item, and
-        // you provide access to all the views for a data item in a view holder
         public class SentViewHolder extends RecyclerView.ViewHolder {
 
-            private View view;
             private TextView message;
             private Button chatButton;
 
-
             public SentViewHolder(View view) {
                 super(view);
-                this.view = view;
                 message = view.findViewById(R.id.object_name);
             }
         }
@@ -244,15 +225,11 @@ public class SingleChatFragment extends Fragment {
             }
         }
 
-        // Provide a suitable constructor (depends on the kind of dataset)
         public ChatAdapter(ArrayList<Reply> myDataset, Context context) {
-
             messageList = myDataset;
-            this.context = context;
-            //this.buttonClickListener = onClickListener;
         }
 
-        // Create new views (invoked by the layout manager)
+        @NotNull
         @Override
         public SentViewHolder onCreateViewHolder(ViewGroup parent,
                                                  int viewType) {
@@ -263,15 +240,13 @@ public class SingleChatFragment extends Fragment {
                         .inflate(R.layout.sent_message_in_chat, parent, false);
                 return new SentViewHolder(v);
             }
-            else if (viewType == VIEW_TYPE_MESSAGE_RECEIVED) {
+            else {
                 View v = LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.received_message_in_chat, parent, false);
                 return new SentViewHolder(v);
             }
-            return null;
         }
 
-        // Replace the contents of a view (invoked by the layout manager)
         @Override
         public void onBindViewHolder(SentViewHolder holder, final int position) {
             // - get element from your dataset at this position
@@ -279,10 +254,6 @@ public class SingleChatFragment extends Fragment {
             Reply message = messageList.get(position);
             //ho mandato io il messaggio
             holder.message.setText(messageList.get(position).getMessage());
-
-
-            /*holder.itemView.setOnClickListener(new View.OnClickListener() {
-             */
 
             //holder.chatButton.setText("Manda un messaggio");
             //holder.chatButton.setId(position);
@@ -294,28 +265,15 @@ public class SingleChatFragment extends Fragment {
 
             holder.itemView.setActivated(isExpanded);
 
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mExpandedPosition = isExpanded ? -1:position;
-                    notifyItemChanged(position);
-                }
+            holder.itemView.setOnClickListener(v -> {
+                mExpandedPosition = isExpanded ? -1:position;
+                notifyItemChanged(position);
             });
         }
 
-
-        // Return the size of your dataset (invoked by the layout manager)
         @Override
         public int getItemCount() {
-
             return messageList.size();
-
-        }
-
-
-        public void setClickListener(ItemClickListener itemClickListener){
-            Log.v("tag", "tag");
-            //this.itemClickListener = itemClickListener;
         }
     }
 }

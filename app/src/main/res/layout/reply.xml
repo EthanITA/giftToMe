@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools">
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="0.1dp"
+        android:layout_height="0.05dp"
         android:background="@android:color/darker_gray"
         android:layout_alignParentBottom="true"
         />
@@ -15,18 +15,18 @@
         android:id="@+id/object_replied_to"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
+        android:textSize="15sp"
         tools:text= "object_replied_to NAME"
-        android:layout_margin="10dp"
+
         />
 
     <TextView
         android:id="@+id/replier_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
+        android:textSize="15sp"
         tools:text= "REPLY IS FROM: NAME"
-        android:layout_margin="8dp"
+        android:layout_margin="3dp"
         android:layout_below="@+id/object_replied_to"
         android:layout_centerHorizontal="true"
         android:layout_alignParentStart="true"
@@ -37,11 +37,11 @@
         android:id="@+id/reply_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
-        tools:text= "REPLY IS FROM: NAME"
-        android:layout_margin="8dp"
+        android:textSize="15sp"
+        tools:text= "REPLY MESSAGE"
+        android:layout_margin="3dp"
         android:layout_below="@+id/replier_name"
-        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
         />
 
     <Button
@@ -49,12 +49,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/reply_message"
-        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        android:textSize="12sp"
+        android:text="@string/rispondi"
         />
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="0.1dp"
+        android:layout_height="0.05dp"
         android:background="@android:color/darker_gray"
         android:layout_alignParentBottom="true"
         />

@@ -1,12 +1,13 @@
 package com.gifttome.gifttome;
 
 
-import android.app.Activity;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import twitter4j.Status;
+
 public class RepliesToMeFragment extends Fragment implements View.OnClickListener{
 
     public RepliesToMeFragment() {
@@ -43,12 +47,17 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
     private RepliesAdapter mAdapter;
     private MainActivity mainActivity;
     private UserTimeline userTimeline;
+    private String username;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View thisFragment = inflater.inflate(R.layout.fragment_chats, container, false);
+        View thisFragment = inflater.inflate(R.layout.fragment_responses_to_me, container, false);
+
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        username = sharedPreferences.getString("username", null);
 
         mainActivity = (MainActivity) getActivity();
 
@@ -57,9 +66,9 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
         repliesRecyclerView.setLayoutManager(layoutManager);
         mAdapter = new RepliesAdapter(repliesList, this);
         repliesRecyclerView.setAdapter(mAdapter);
-        mAdapter.notifyDataSetChanged();
 
         getRepliesTweets();
+        mAdapter.notifyDataSetChanged();
 
         return thisFragment;
     }
@@ -80,7 +89,7 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
             List<Tweet> tweets = searchResult.data.items;
             long maxId = 0;
             repliesList.clear();
-
+            Log.i("szfmprtmf", "success: "+ mainActivity.getMyPosts().size());
             for (Tweet tweet : tweets){
                 String jsonString = tweet.text; //this is the body
 
@@ -89,7 +98,6 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
                     continue;
 
                 try {
-                    assert mainActivity != null;
                     JSONObject jsonObject = new JSONObject(jsonString);
                     UUID targetId = UUID.fromString(jsonObject.get("target").toString());
 
@@ -109,8 +117,6 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
                             reply.setReplyToId(tweet.inReplyToStatusId);
                             reply.setObjectRepliedTo(myObject);
 
-                            repliesList.add(reply);
-
                             if (!sender.equals("") && !receiver.equals(""))
                                 repliesList.add(reply);
                             Log.v("credd1RepliesToMe", String.valueOf(repliesList.size()));
@@ -121,6 +127,8 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
                 }
                 maxId = tweet.id;
             }
+
+            Log.i("rplstmrplssz", "success: " + repliesList.size());
             mAdapter.notifyDataSetChanged();
 
             //da ricontrollare
@@ -139,9 +147,38 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
     @Override
     public void onClick(View v) {
         //do stuff (todo)
-        NavController nav = NavHostFragment.findNavController(this);
-        nav.navigate(R.id.nav_single_chat);
+        int i = v.getId();
+        dialogCreateReplyToReply(repliesList.get(i));
 
+    }
+
+    private void dialogCreateReplyToReply(Reply replyToReplyTo) {
+        //costruisco un dialog per la risposta
+        final EditText edittext = new EditText(getContext());
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
+        builder.setTitle("Scrivi il testo della risposta");
+        builder.setMessage("Enter Your Message");
+        builder.setView(edittext);
+        builder.setPositiveButton("INVIA", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Reply reply =  new Reply(UUID.randomUUID(), username, replyToReplyTo.getTargetid(),replyToReplyTo.getSender(), edittext.getText().toString());
+
+                try {
+                    Status tweetStat = Utils.postOnTwitter(reply.formatToString());
+                    reply.setTwitterId(tweetStat.getId());
+                    Toast.makeText(getActivity(), "Risposta avvenuta con successo", Toast.LENGTH_SHORT).show();
+                    mainActivity.addMyRepliesUUID(reply.getId().toString());
+
+                } catch (twitter4j.TwitterException | JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        builder.setNegativeButton("annulla", null);
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     private static class RepliesAdapter extends RecyclerView.Adapter<RepliesAdapter.RepliesViewHolder>{
@@ -184,11 +221,14 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
         @Override
         public void onBindViewHolder(RepliesViewHolder holder, final int position) {
             Reply message = messageList.get(position);
-
-            holder.replyMessage.setText(message.getMessage());
+            String messageText = "\""+message.getMessage()+"\"";
+            holder.replyMessage.setText(messageText);
             holder.replierName.setText(message.getSender());
-            holder.objectRepliedTo.setText(message.getObjectRepliedTo().getName());
-            holder.replyButton.setText("do stuff (answer)");
+            if(message.getObjectRepliedTo() != null){
+                String interestedObj = "riguardante "+message.getObjectRepliedTo().getName();
+                holder.objectRepliedTo.setText(interestedObj);
+            }
+
             holder.replyButton.setId(position);
             holder.replyButton.setOnClickListener(buttonClickListener);
 

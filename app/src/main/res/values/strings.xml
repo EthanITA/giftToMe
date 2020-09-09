@@ -33,5 +33,6 @@
     <string name="descrizione">Descrizione</string>
     <string name="latitudine">Latitudine</string>
     <string name="longitudine">Longitudine</string>
+    <string name="rispondi">Rispondi</string>
 
 </resources>

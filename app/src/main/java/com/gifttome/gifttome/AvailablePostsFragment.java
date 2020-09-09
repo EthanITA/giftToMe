@@ -13,8 +13,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -59,14 +64,31 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        NavController navController = NavHostFragment.findNavController(this);
+
+        if(username == null) {
+            navController.navigate(R.id.nav_log_in);
+            Log.i("usrnmnll", "onCreateView: username è null");
+
+        }
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        //check if user has chosen a username
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        username = sharedPreferences.getString("username", null);
 
         // Inflate the layout for this fragment
         thisFragment = inflater.inflate(R.layout.fragment_available_posts, container, false);
         mainActivity = (MainActivity) getActivity();
-        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
-        username = sharedPreferences.getString("username", null);
+
+        if(username== null)
+            return thisFragment;
+
         Log.i("usernamefromshared", "onCreateView: " + username);
         inizializzazione();
         TwitterConfig config = new TwitterConfig.Builder(requireContext())
@@ -93,13 +115,13 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
             }
         });
 
-
-        //bearTokenTwitter();
         makeTwitterRequest("true");
         //getAvailablePostsTweets();
         nAdapter.notifyDataSetChanged();
 
         return thisFragment;
+
+
     }
 
 
@@ -142,7 +164,6 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
             List<Tweet> tweets = searchResult.data.items;
             long maxId = 0;
             avObData.clear();
-            MainActivity mainActivity = (MainActivity) getActivity();
 
             for (Tweet tweet : tweets){
                 String jsonString = tweet.text; //Here is the body
@@ -181,7 +202,7 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
             if (mainActivity != null)
                 mainActivity.addNewAvailablePost(avObData);
             nAdapter.notifyDataSetChanged();
-            Log.v("credd", String.valueOf(avObData.size()));
+            Log.v("creddavobdataavailposts", String.valueOf(avObData.size()));
 
             //da ricontrollare
             if (searchResult.data.items.size() == 100) {
@@ -205,6 +226,7 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
             @Override
             public void onComplete(ArrayList<AvailableObjectsData> result) {
                 Log.i("oncompletearray", "onComplete: " + result.size());
+                //mainActivity.addToMyPosts(result);
 /*
                 avObData.clear();
                 avObData.addAll(result);
@@ -238,11 +260,10 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
                 Reply reply =  new Reply(UUID.randomUUID(), username, objectInterestedIn.getId(),objectInterestedIn.getIssuer(), edittext.getText().toString());
 
                 try {
-                    Status tweetStat = postOnTwitter(reply.formatToString());
-                    if(tweetStat != null) {
-                        reply.setTwitterId(tweetStat.getId());
-                        Toast.makeText(getActivity(), "Risposta avvenuta con successo", Toast.LENGTH_SHORT).show();
-                    }
+                    Status tweetStat = Utils.postOnTwitter(reply.formatToString());
+                    reply.setTwitterId(tweetStat.getId());
+                    mainActivity.addMyRepliesUUID(reply.getId().toString());
+                    Toast.makeText(getActivity(), "Risposta avvenuta con successo", Toast.LENGTH_SHORT).show();
                 } catch (twitter4j.TwitterException | JSONException e) {
                     e.printStackTrace();
                 }
@@ -329,7 +350,6 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
                 }
                 maxId = tweet.id;
             }
-            if (mainActivity != null)
             nAdapter.notifyDataSetChanged();
 
             //da ricontrollare
@@ -344,17 +364,4 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         }
     };
 
-
-    public Status postOnTwitter(String text) throws twitter4j.TwitterException {
-
-        twitter4j.Twitter twitter = TwitterFactory.getSingleton();
-
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
-
-        Status status = twitter.updateStatus(text);
-        System.out.println("Successfully updated the status to [" + status.getText() + "].");
-
-        return status;
-    }
 }

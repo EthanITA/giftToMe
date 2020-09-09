@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.JobIntentService;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -11,14 +12,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
-import androidx.work.WorkRequest;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
 
 import android.Manifest;
-import android.app.IntentService;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -49,30 +44,32 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.twitter.sdk.android.core.Callback;
+import com.twitter.sdk.android.core.DefaultLogger;
 import com.twitter.sdk.android.core.Result;
+import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.twitter.sdk.android.core.TwitterConfig;
 import com.twitter.sdk.android.core.models.Tweet;
 import com.twitter.sdk.android.tweetui.TimelineResult;
 import com.twitter.sdk.android.tweetui.UserTimeline;
 
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 
 public class MainActivity extends AppCompatActivity {
+    boolean notified = false;
 
     private AppBarConfiguration mAppBarConfiguration;
     private int notificationId = 1000;
@@ -81,14 +78,29 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<AvailableObjectsData> availablePosts = new ArrayList<>();
     private ArrayList<AvailableObjectsData> myPosts = new ArrayList<>();
     private ArrayList<Reply> repliesToMyPosts = new ArrayList<>();
-    private ArrayList<UUID> repliesToMyPostsUUID = new ArrayList<>();
+    private ArrayList<String> myRepliesUUID = new ArrayList<>();
+    private Intent checkRepliesIntent;
+
+
+    public void addMyRepliesUUID(String myRepliesUUID) {
+        this.myRepliesUUID.add(myRepliesUUID);
+        Log.i("jhdon", "dentro add replies: ");
+        stopService(checkRepliesIntent);
+        startCheckingForReplies();
+    }
 
     public ArrayList<AvailableObjectsData> getMyPosts() {
         return myPosts;
     }
 
-    public void addToMyPosts(AvailableObjectsData myPost) {
-        this.myPosts.add(myPost);
+    public void addToMyPosts(ArrayList<AvailableObjectsData> actualMyPosts){
+        myPosts.clear();
+        Log.i("jhdon", "dentro add to my posts: ");
+        Log.i("jhdon", "addToMyPosts: " + actualMyPosts.size());
+        myPosts.addAll(actualMyPosts);
+        stopService(checkRepliesIntent);
+        startCheckingForReplies();
+
     }
 
     public String getUsername() {
@@ -110,93 +122,105 @@ public class MainActivity extends AppCompatActivity {
     private PendingIntent geofencePendingIntent;
     LinkedList<Geofence> geofenceList = new LinkedList<>();
 
+    private UserTimeline userTimeline;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+        TwitterAuthConfig authConfig = new TwitterAuthConfig(getResources().getString(R.string.Consumer_key), getResources().getString(R.string.CONSUMER_SECRET));
+        TwitterConfig config = new TwitterConfig.Builder(this)
+                .logger(new DefaultLogger(Log.DEBUG))
+                .twitterAuthConfig(authConfig)
+                .debug(true)
+                .build();
+        com.twitter.sdk.android.core.Twitter.initialize(config);
         //Twitter twitter = TwitterFactory.getSingleton();
 
         //setContentView(R.layout.activity_main);
         setContentView(R.layout.activity_main_nav_dra);
 
         SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
-        String sharedPrefUsername = sharedPreferences.getString("username", null);
-        //Intent intent = new Intent(this, MyIntentService.class);
-        //startService(intent);
-        //startActivity(i); // For the activity; ignore this for now.
-        if(sharedPrefUsername == null){
-            //todo stuff after a user chooses a username
-           /*
+        username = sharedPreferences.getString("username", null);
+/*
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             LogInFragment logInFragment = new LogInFragment();
 
             fragmentTransaction.add(R.id.fragment_container, logInFragment);
             fragmentTransaction.commit();
-            */
 
-            //Intent loginIntent = new Intent(this, LoginActivity.class);
-            //startActivity(loginIntent);
-        }
-        else {
-            Toolbar toolbar = findViewById(R.id.toolbar);
-            setSupportActionBar(toolbar);
+ */
+        // Intent loginIntent = new Intent(this, LoginActivity.class);
+        //startActivity(loginIntent);
 
-            DrawerLayout drawer = findViewById(R.id.drawer_layout);
-            NavigationView navigationView = findViewById(R.id.nav_view);
-
-            mAppBarConfiguration = new AppBarConfiguration.Builder(
-                    R.id.nav_availableposts, R.id.nav_myposts, R.id.nav_replies_to_me, R.id.nav_my_replies)
-                    .setOpenableLayout(drawer)
-                    .build();
-            NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-            NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
-            NavigationUI.setupWithNavController(navigationView, navController);
-
-            username = sharedPrefUsername;
-            Log.i("sharedPUsernameMainAc", "onCreate: ");
-            System.setProperty("twitter4j.oauth.consumerKey", "fud09hdnKuTT7PtYNuCZn2tRV");
-            System.setProperty("twitter4j.oauth.consumerSecret", "gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp");
-            System.setProperty("twitter4j.oauth.accessToken", "1271353616847245315-Ru2rzisv9JsFyYglrOjdwN6zBTmlFC");
-            System.setProperty("twitter4j.oauth.accessTokenSecret", "AYbNR5QC1pSOxXZHIDLnuiio0X3car8tdSZHVS8dZVvQe");
-            System.setProperty("twitter4j.debug", "true");
-
-            geofencingClient = LocationServices.getGeofencingClient(this);
-
-            fusedLocationClientMain = LocationServices.getFusedLocationProviderClient(this);
-            locationCallback = new LocationCallback() {
-                @Override
-                public void onLocationResult(LocationResult locationResult) {
-                    if (locationResult == null) {
-                        Log.v("last location is null", "F");
-                        return;
-                    }
-                    lastLocationMain = locationResult.getLastLocation();
-                }
-            };
             /*
-            try {
-                executorService.scheduleAtFixedRate(new Runnable() {
-                    public void run() {
-                        // do stuff
-                        Log.i("insdthrpllsch", "tictoc: ");
-                        checkForRepliesTwitter();
+            SharedPreferences shaPreferences = this.getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
 
-                    }
-                }, 0, 10, TimeUnit.SECONDS);
+            editor.putString("username", null);
+            editor.apply();
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                Log.e("threadpoolerror", Objects.requireNonNull(e.getMessage()));
-            }
              */
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-            WorkRequest checkRepliesWorkRequest = new PeriodicWorkRequest.Builder(checkRepliesWorker.class, 15, TimeUnit.MINUTES).build();
-            WorkManager.getInstance(getApplication()).enqueue(checkRepliesWorkRequest);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        NavigationView navigationView = findViewById(R.id.nav_view);
 
-            makeLocationRequest();
-            startLocationUpdates();
-        }
+        mAppBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.nav_availableposts, R.id.nav_myposts, R.id.nav_replies_to_me, R.id.nav_my_replies)
+                .setOpenableLayout(drawer)
+                .build();
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+        NavigationUI.setupWithNavController(navigationView, navController);
+
+        System.setProperty("twitter4j.oauth.consumerKey", "fud09hdnKuTT7PtYNuCZn2tRV");
+        System.setProperty("twitter4j.oauth.consumerSecret", "gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp");
+        System.setProperty("twitter4j.oauth.accessToken", "1271353616847245315-Ru2rzisv9JsFyYglrOjdwN6zBTmlFC");
+        System.setProperty("twitter4j.oauth.accessTokenSecret", "AYbNR5QC1pSOxXZHIDLnuiio0X3car8tdSZHVS8dZVvQe");
+        System.setProperty("twitter4j.debug", "true");
+
+        geofencingClient = LocationServices.getGeofencingClient(this);
+
+        fusedLocationClientMain = LocationServices.getFusedLocationProviderClient(this);
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    Log.v("lastlocationisnull", "F");
+                    return;
+                }
+                lastLocationMain = locationResult.getLastLocation();
+            }
+        };
+
+
+        //WorkRequest checkRepliesWorkRequest = new PeriodicWorkRequest.Builder(checkRepliesWorker.class, 15, TimeUnit.MINUTES).build();
+        //WorkManager.getInstance(getApplication()).enqueue(checkRepliesWorkRequest);
+
+        makeLocationRequest();
+        startLocationUpdates();
+
+        getMyPostsTweets();
+
+        Log.i("mdifua", "onCreate:reptomyposts "+ myRepliesUUID.size());
+        Log.i("mdifua", "onCreate:mposts "+ myPosts.size());
+
+        //Gson gson = new Gson();
+        //String  = gson.toJson(availablePosts);
+
+/*
+        Intent checkRepliesIntent = new Intent(this, CheckForReplies.class);
+
+        checkRepliesIntent.putExtra("myPosts", myPosts);
+        checkRepliesIntent.putExtra("repliesUUID", repliesToMyPostsUUID);
+        CheckForReplies.enqueueWork(this, checkRepliesIntent);
+
+ */
+
+
     }
 
     protected void makeLocationRequest() {
@@ -279,17 +303,29 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        createNotificationChannel();
+        //createNotificationChannel();
     }
 
-    public PendingIntent getGeofencePendingIntent() {
+    public PendingIntent getGeofencePendingIntent(ArrayList<AvailableObjectsData> arr) {
         if (geofencePendingIntent != null) {
+            Log.i("availablePostssize", String.valueOf(arr.size()));
+            Log.i("availablePostssize", String.valueOf(availablePosts.size()));
+
             return geofencePendingIntent;
         }
+        Log.i("availablePostssize1", String.valueOf(arr.size()));
+        Log.i("availablePostssize1", String.valueOf(availablePosts.size()));
+
         Intent geoIntent = new Intent(this, GeofenceBroadcastReceiver.class);
         Gson gson = new Gson();
-        String jsonlist = gson.toJson(availablePosts);
+        String jsonlist = gson.toJson(arr);
+        Log.i("availablePostssize3", String.valueOf(availablePosts.size()));
+        Log.i("availablePostssize3", String.valueOf(arr.size()));
+
         geoIntent.putExtra("jsonlist", jsonlist);
+        //geoIntent.putExtra("oblist", arr);
+        Log.i("availablePostssize4", String.valueOf(availablePosts.size()));
+        Log.i("availablePostssize4", String.valueOf(arr.size()));
 
         geofencePendingIntent = PendingIntent.getBroadcast(this, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         return geofencePendingIntent;
@@ -298,10 +334,11 @@ public class MainActivity extends AppCompatActivity {
     public void generateGeofencesForAvailableObjects() {
         geofenceList.clear();
         //genero geofence per ogni oggetto
+        Log.i("creddqua", "generateGeofencesForAvailableObjects: "+  availablePosts.size());
         for (int j = 0; j < availablePosts.size(); j++) {
             buildGeofence(j);
+            Log.i("fpqufn", "generateGeofencesForAvailableObjects: " + j);
         }
-        Log.i("gengeof", "generateGeofencesForAvailableObjects: starting geofencing");
         startGeofencing();
     }
 
@@ -342,7 +379,9 @@ public class MainActivity extends AppCompatActivity {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        geofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+        Log.i("startgeofencing", "addNewAvailablePost: "+ availablePosts.size());
+
+        geofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent(availablePosts))
                 .addOnSuccessListener(this, aVoid -> Log.i("addOnSuccessListener", "geofence added successfully"))
                 .addOnFailureListener(this, e -> Log.e("addOnFailureListener", "Failure to add geofence"));
     }
@@ -351,10 +390,13 @@ public class MainActivity extends AppCompatActivity {
     //geofencingClient.removeGeofences(getGeofencePendingIntent())
 
     public void addNewAvailablePost(ArrayList<AvailableObjectsData> avObjects){
-        geofencingClient.removeGeofences(getGeofencePendingIntent())
+        geofencePendingIntent = null;
+        geofencingClient.removeGeofences(getGeofencePendingIntent(avObjects));
+        geofenceList.clear();
         availablePosts.clear();
-        availablePosts.addAll(avObjects);
+        Log.i("MainANAP", "addNewAvailablePost: "+availablePosts.addAll(avObjects));
 
+        Log.i("creddMainANAP", "addNewAvailablePost: "+ availablePosts.size());
         generateGeofencesForAvailableObjects();
     }
 
@@ -365,108 +407,14 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
-
-    private void checkForRepliesTwitter() {
-        Twitter twitter = TwitterFactory.getSingleton();
-
-        Log.i("insdthrpllsch", "dentro checkforreplies: ");
-        UserTimeline userTimeline = new UserTimeline.Builder().screenName("GiftToME5")
-                .includeRetweets(false)
-                .maxItemsPerRequest(200)
-                .build();
-        Log.i("insdthrpllsch", "dentro checkforreplies2: ");
-
-        userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
-            @Override
-            public void success(Result<TimelineResult<Tweet>> searchResult)
-            {
-                Log.i("insdthrpllsch", "dentro callback");
-                List<Tweet> tweets = searchResult.data.items;
-                long maxId = 0;
-                UUID repliedToId;
-                for (Tweet tweet : tweets){
-                    String jsonString = tweet.text;
-                    if(!jsonString.contains("#LAM_giftToMe_2020-article"))
-                        continue;
-
-                    for (AvailableObjectsData myPost: myPosts ){
-                        JSONObject jsonObject = null;
-                        try {
-                            jsonObject = new JSONObject(jsonString);
-                            UUID targetId = UUID.fromString(String.valueOf(jsonObject.get("target")));
-                            UUID replyId = UUID.fromString(String.valueOf(jsonObject.get("id")));
-                            //se ho una risposta nuova
-                            if(myPost.getId().equals(targetId) && !repliesToMyPostsUUID.contains(replyId)){
-                                String textReply = String.valueOf(jsonObject.get("message"));
-                                sendNotification(getApplication(), myPost, textReply);
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }}
-                Log.i("srchdcl", "successful search: ");
-            }
-
-            @Override
-            public void failure(com.twitter.sdk.android.core.TwitterException error) {
-                Log.e("TAG","Error");
-                Toast.makeText(getApplication(), "problema di connessione", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    Callback<TimelineResult<Tweet>> mainCallback = new Callback<TimelineResult<Tweet>>() {
-        @Override
-        public void success(Result<TimelineResult<Tweet>> searchResult)
-        {
-            Log.i("insdthrpllsch", "dentro callback");
-
-            List<Tweet> tweets = searchResult.data.items;
-            long maxId = 0;
-            UUID repliedToId;
-            for (Tweet tweet : tweets){
-                String jsonString = tweet.text;
-                if(!jsonString.contains("#LAM_giftToMe_2020-article"))
-                    continue;
-
-                for (AvailableObjectsData myPost: myPosts ){
-                    JSONObject jsonObject = null;
-                    try {
-                        jsonObject = new JSONObject(jsonString);
-                        UUID targetId = UUID.fromString(String.valueOf(jsonObject.get("target")));
-                        UUID replyId = UUID.fromString(String.valueOf(jsonObject.get("id")));
-                        //se ho una risposta nuova
-                        if(myPost.getId().equals(targetId) && !repliesToMyPostsUUID.contains(replyId)){
-                            String textReply = String.valueOf(jsonObject.get("message"));
-                            sendNotification(getApplication(), myPost, textReply);
-                            sendNotification(getApplication(), myPost, textReply);
-                            repliesToMyPostsUUID.add(replyId);
-                        }
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }}
-            Log.i("srchdcl", "successful search: ");
-        }
-
-        @Override
-        public void failure(com.twitter.sdk.android.core.TwitterException error) {
-            Log.e("TAG","Error");
-            Toast.makeText(getApplication(), "problema di connessione", Toast.LENGTH_SHORT).show();
-        }
-    };
-
-
-    public void sendNotification(Context context, AvailableObjectsData myNotifiedPost,
-                                 String replyText){
+    public static void sendNotification(Context context, AvailableObjectsData myNotifiedPost,
+                                        String replyText){
         //tap intent todo
-
-        Log.i("insdthrpllsch", "dentro sendNotification");
+        int notificationId = 1;
+        Log.i("insdhn", "dentro sendNotification");
 
         Intent notificationIntent = new Intent(context, MainActivity.class);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK );
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 1, notificationIntent, 0);
 
         //create notification
@@ -484,12 +432,12 @@ public class MainActivity extends AppCompatActivity {
         notificationId++;
     }
 
-    public void responseNotification(){
+   /* public void responseNotification(){
         executorService.scheduleAtFixedRate(new Runnable() {
             public void run() {
                 // do stuff
                 Log.i("insdthrpllsch", "tictoc: ");
-                checkForRepliesTwitter();
+                checkForRepliesTwitter(getApplicationContext(), availablePosts, repliesToMyPostsUUID);
 
                 runOnUiThread(new Runnable() {
                     public void run() {
@@ -518,27 +466,244 @@ public class MainActivity extends AppCompatActivity {
             // Indicate whether the work finished successfully with the Result
             return Result.success();
         }
+    }*/
+
+
+    public void startCheckingForReplies(){
+        checkRepliesIntent = new Intent(this, BackgroundRepliesService.class);
+        Gson gson = new Gson();
+        String jsonmyPosts = gson.toJson(myPosts);
+        String jsonRepliesuuid = gson.toJson(myRepliesUUID);
+        checkRepliesIntent.putExtra("myPosts", jsonmyPosts);
+        checkRepliesIntent.putExtra("repliesUUID", jsonRepliesuuid);
+        checkRepliesIntent.putExtra("username", username);
+
+        //CheckForReplies.enqueueWork(this, checkRepliesIntent);
+        startService(checkRepliesIntent);
     }
 
-    public static class CheckForReplies extends IntentService {
+    public static class CheckForReplies extends JobIntentService {
 
-        public CheckForReplies(String name) {
-            super(name);
-        }
+        private static final int id = 20;
+        private boolean found = false;
         public CheckForReplies() {
-            super("default");
+            super();
         }
 
 
         @Override
-        protected void onHandleIntent(Intent workIntent) {
-            // Gets data from the incoming Intent
-            checkForRepliesTwitter()
-            //Do work here, based on the contents of dataString
+        protected void onHandleWork(@NonNull Intent intent) {
+            ArrayList<AvailableObjectsData>  myPosts = new ArrayList<>();
+            ArrayList<String>  replies = new ArrayList<>();
+            String username = intent.getStringExtra("username");
+
+            Gson gson = new Gson();
+            String jsonMyPosts = intent.getStringExtra("myPosts");
+            if(jsonMyPosts != null) {
+                Log.i("myPosts", jsonMyPosts);
+                Type type = new TypeToken<ArrayList<AvailableObjectsData>>() {
+                }.getType();
+                myPosts = gson.fromJson(jsonMyPosts, type);
+            }
+
+            String jsonReplies = intent.getStringExtra("repliesUUID");
+            if(jsonReplies != null) {
+                Log.i("repliesUUID", jsonReplies);
+                Type type = new TypeToken<ArrayList<String>>() {
+                }.getType();
+                replies = gson.fromJson(jsonReplies, type);
+            }
+
+
+            Log.i("hndlwek", "onHandleWork: myposts" + myPosts.size());
+            Log.i("hndlwek", "onHandleWork: myposts" + replies.size());
+            while(!found) {
+                checkForRepliesTwitter(getApplicationContext(), myPosts, replies, username);
+                try {
+                    Thread.sleep(8000);
+                    stopSelf();
+
+                } catch (InterruptedException e) {
+                    Log.e("rerror", "onHandleWork: ");
+
+                    e.printStackTrace();
+
+                }
+            }
+        }
+
+        public static void enqueueWork(Context context, Intent intent) {
+            enqueueWork(context, MainActivity.CheckForReplies.class, id, intent);
+        }
+
+        private void checkForRepliesTwitter(Context context, ArrayList<AvailableObjectsData> postlist, ArrayList<String> alreadycheckedreply, String username) {
+            Twitter twitter = TwitterFactory.getSingleton();
+            Log.i("insdthrpllsch", "dentro checkforreplies: ");
+            UserTimeline userTimeline = new UserTimeline.Builder().screenName("GiftToME5")
+                    .includeRetweets(false)
+                    .maxItemsPerRequest(200)
+                    .build();
+            Log.i("insdthrpllsch", "dentro checkforreplies2: ");
+
+            userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
+                @Override
+                public void success(Result<TimelineResult<Tweet>> searchResult)
+                {
+                    Log.i("insdthrpllsch", "dentro callback");
+                    List<Tweet> tweets = searchResult.data.items;
+                    long maxId = 0;
+                    UUID repliedToId;
+                    Log.i("insdthrpllsch", "success postlist: " + postlist.size());
+                    Log.i("12334", "successalreadychcked: " + alreadycheckedreply.size());
+                    for (Tweet tweet : tweets){
+                        String jsonString = tweet.text;
+                        if(jsonString.contains("#LAM_giftToMe_2020-article"))
+                            continue;
+
+                        for (AvailableObjectsData myPost: postlist ){
+                            try {
+                                JSONObject jsonObject = new JSONObject(jsonString);
+                                String replyId = jsonObject.get("id").toString();
+                                UUID targetId = UUID.fromString(jsonObject.get("target").toString());
+                                String sender = jsonObject.get("sender").toString();
+
+                                //se ho una risposta nuova
+                                if(myPost.getId().equals(targetId) && !alreadycheckedreply.contains(replyId) && !sender.equals(username)){
+                                    Log.i("insdthrpllsch", "success: risposta trovata" + replyId);
+                                    String textReply = String.valueOf(jsonObject.get("message"));
+                                    sendNotification(context, myPost, textReply);
+                                    found = true;
+                                }
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                Log.i("fdlna", "error: "+ e.getMessage());
+                            }
+                        }}
+                    Log.i("srchdcl", "successful search: ");
+                }
+
+                @Override
+                public void failure(com.twitter.sdk.android.core.TwitterException error) {
+                    Log.e("TAG","Errorer");
+                    Toast.makeText(context, "problema di connessione", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+    }
+
+
+    private void getMyPostsTweets() {
+        userTimeline = new UserTimeline.Builder()
+                .screenName("GiftToME5")
+                .includeRetweets(false)
+                .maxItemsPerRequest(200)
+                .build();
+        userTimeline.next(null, callbackMyPosts);
+    }
+
+    Callback<TimelineResult<Tweet>> callbackMyPosts = new Callback<TimelineResult<Tweet>>()
+    {
+        @Override
+        public void success(Result<TimelineResult<Tweet>> searchResult)
+        {
+            List<Tweet> tweets = searchResult.data.items;
+            long maxId = 0;
+            myPosts.clear();
+
+            for (Tweet tweet : tweets){
+                String jsonString = tweet.text;
+                try {
+                    JSONObject jsonObject = new JSONObject(jsonString);
+                    String username1 = jsonObject.get("issuer").toString();
+
+                    if (username.equals(username1)){
+                        String name1 = jsonObject.get("name").toString();
+                        Log.i("gtmpoststwiitmain1", name1);
+
+                        UUID id1 = UUID.fromString(jsonObject.get("id").toString());
+
+                        String category = jsonObject.get("category").toString();
+                        double lat = Double.parseDouble(jsonObject.get("lat").toString());
+                        double lon = Double.parseDouble(jsonObject.get("lon").toString());
+                        String description = jsonObject.get("description").toString();
+
+                        AvailableObjectsData myPost = new AvailableObjectsData(name1, username1, id1 , category, lat, lon, description);
+                        myPost.setTwitterId(tweet.getId());
+                        myPosts.add(myPost);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                maxId = tweet.id;
+            }
+            //prendo anche le risposte
+            getRepliesUUiIDS();
 
         }
+        @Override
+        public void failure(com.twitter.sdk.android.core.TwitterException error)
+        {
+            Log.e("TAG","Error");
+            Toast.makeText(getApplication(), "errore, controllare la connessione ad internet", Toast.LENGTH_SHORT).show();
+
+        }
+    };
+
+
+    private void getRepliesUUiIDS() {
+        userTimeline = new UserTimeline.Builder().screenName("GiftToME5")
+                .includeRetweets(false)
+                .maxItemsPerRequest(200)
+                .build();
+        userTimeline.next(null, callbackreplies);
+
+    }
+
+    Callback<TimelineResult<Tweet>> callbackreplies = new Callback<TimelineResult<Tweet>>() {
+        @Override
+        public void success(Result<TimelineResult<Tweet>> searchResult) {
+            List<Tweet> tweets = searchResult.data.items;
+            long maxId = 0;
+            myRepliesUUID.clear();
+
+            for (Tweet tweet : tweets){
+                String jsonString = tweet.text;
+
+                //se il tweet non è una risposta viene ignorato
+                if(!jsonString.contains("#LAM_giftToMe_2020 -reply"))
+                    continue;
+
+                try {
+                    JSONObject jsonObject = new JSONObject(jsonString);
+                    String receiver1 = jsonObject.get("receiver").toString();
+
+                    if (receiver1.equals(username)) {
+                        myRepliesUUID.add(jsonObject.get("id").toString());
+                        Log.i("credd1myreplies", String.valueOf(myRepliesUUID.size()));
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                maxId = tweet.id;
+            }
+
+
+            //da ricontrollare
+            if (searchResult.data.items.size() == 100) {
+                userTimeline.previous(maxId, callbackreplies);
+            }
+
+            startCheckingForReplies();
+        }
+        @Override
+        public void failure(com.twitter.sdk.android.core.TwitterException error) {
+            Log.e("TAG","Error");
+            Toast.makeText(getApplication(), "problema di connessione", Toast.LENGTH_SHORT).show();
+        }
+
+
+    };
 }
-
-
-}
-

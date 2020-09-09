@@ -32,4 +32,9 @@
         android:name="com.gifttome.gifttome.SingleChatFragment"
         android:label="Chat"
         />
+    <fragment
+        android:id="@+id/nav_log_in"
+        android:name="com.gifttome.gifttome.LogInFragment"
+        android:label="username"
+        />
 </navigation>

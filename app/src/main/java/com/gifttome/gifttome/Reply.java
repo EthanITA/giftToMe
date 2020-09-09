@@ -26,6 +26,16 @@ public class Reply{
     private AvailableObjectsData objectRepliedTo;
     private boolean objectRepliedToIsDeleted;
 
+    public Reply getReplyRepliedTo() {
+        return replyRepliedTo;
+    }
+
+    public void setReplyRepliedTo(Reply replyRepliedTo) {
+        this.replyRepliedTo = replyRepliedTo;
+    }
+
+    private Reply replyRepliedTo;
+
     public AvailableObjectsData getObjectRepliedTo() {
         return this.objectRepliedTo;
     }
@@ -89,6 +99,7 @@ public class Reply{
         this.receiver = receiver;
         this.message = message;
         this.objectRepliedTo = null;
+        this.replyRepliedTo = null;
     }
 
     public String formatToString() throws JSONException {

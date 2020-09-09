@@ -35,7 +35,9 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         createNotificationChannel(context);
         Bundle intentBundle = intent.getExtras();
         if (intentBundle != null) {
-            intentBundle.get("jsonlist");
+            Log.i("insdintntbundle", "onReceive: " + intentBundle.get("jsonlist"));
+            Log.i("insdintntbundle", "onReceive2: "+ intentBundle.get("oblist"));
+            Log.i("insdintntbundle", "onReceive3: "+ (ArrayList<AvailableObjectsData>)intentBundle.get("oblist"));
             Gson gson = new Gson();
             String json = intentBundle.getString("jsonlist");
             if(json != null) {
@@ -49,7 +51,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()) {
             String errorMessage = GeofenceStatusCodes.getStatusCodeString(geofencingEvent.getErrorCode());
-            Log.e("geofencingEvent Error", errorMessage);
+            Log.e("geofencingEventError", errorMessage);
             return;
         }
         int geofenceTransition = geofencingEvent.getGeofenceTransition();

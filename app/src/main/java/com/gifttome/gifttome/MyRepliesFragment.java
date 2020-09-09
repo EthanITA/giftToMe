@@ -68,7 +68,6 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
         repliesRecyclerView.setAdapter(mAdapter);
 
         getRepliesTweets();
-        //getObjectsRepliedToTweets();
         //mAdapter.notifyDataSetChanged();
 
         return thisFragment;
@@ -113,9 +112,7 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
                         reply.setTwitterId(tweet.getId());
                         reply.setReplyToId(tweet.inReplyToStatusId);
                         //reply.setObjectRepliedTo(myObject);
-
-                        if (!sender.equals("") && !receiver.equals(""))
-                            repliesList.add(reply);
+                        repliesList.add(reply);
                         Log.v("credd1myreplies", String.valueOf(repliesList.size()));
                     }
 
@@ -205,10 +202,12 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
                     maxId = tweet.id;
                 }
             }
+            //TODO CANCELLARE LA RISPOSTA SE L'OGGETTO A CUI SI RIFERISCE È STATO CANCELLATO
             //se non è stata trovato l'oggetto a cui si risponde significa che è stato cancellato
+
             for (Reply deleteReply: repliesList){
-                if (deleteReply.getObjectRepliedTo() == null);
-                    //repliesList.remove(deleteReply);
+                if (deleteReply.getObjectRepliedTo() == null)
+                    repliesList.remove(deleteReply);
             }
             mAdapter.notifyDataSetChanged();
 
@@ -321,17 +320,20 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
         @Override
         public void onBindViewHolder(RepliesViewHolder holder, final int position) {
             Reply message = messageList.get(position);
-
-            holder.replyMessage.setText(message.getMessage());
-            holder.replierName.setText(message.getReceiver());
-            holder.replyButton.setText("Modifica Risposta");
+            String messageText = "\"" + message.getMessage()+ "\"";
+            holder.replyMessage.setText(messageText);
+            String sentTo = "Inviato a " + message.getReceiver();
+            holder.replierName.setText(sentTo);
+            holder.replyButton.setText("Modifica");
             holder.replyButton.setOnClickListener(buttonClickListener);
             holder.replyButton.setId(position);
             if(message.getObjectRepliedTo() != null) {
-                holder.objectRepliedTo.setText(message.getObjectRepliedTo().getName());
+                String interestedObj = "riguardante: "+ message.getObjectRepliedTo().getName();
+                holder.objectRepliedTo.setText(interestedObj);
 
                 Log.i("objrepltogetnaem", "onBindViewHolder: "+ message.getObjectRepliedTo().getName());
             }
+
             //gestione dell'espansione dell'item
 
             final boolean isExpanded = position == mExpandedPosition;

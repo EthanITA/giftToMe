@@ -50,7 +50,6 @@ import twitter4j.TwitterFactory;
 
 public class MyPostsFragment extends Fragment implements View.OnClickListener{
     private String username;
-    private Button mButtton;
     private EditText category;
     private EditText description;
     private EditText name;
@@ -66,6 +65,8 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
     private ArrayList<AvailableObjectsData> myPostsList = new ArrayList<>();
     private UserTimeline userTimeline;
     private FusedLocationProviderClient mFusedLocationClient;
+
+    private MainActivity mainActivity;
 
     public MyPostsFragment() {
         // Required empty public constructor
@@ -106,6 +107,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         username = sharedPreferences.getString("username", null);
 
         //in initialize()
+        mainActivity = (MainActivity) getActivity();
         //twitter e display di tweets
         TwitterConfig config = new TwitterConfig.Builder(requireContext())
                 .logger(new DefaultLogger(Log.DEBUG))
@@ -118,12 +120,11 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         recyclerView.setLayoutManager(layoutManager);
         mAdapter = new MyPostsAdapter(myPostsList, this);
         recyclerView.setAdapter(mAdapter);
-        mAdapter.notifyDataSetChanged();
 
         //richiesta del gps
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-        mButtton = thisFragment.findViewById(R.id.test_button_my_post_twitter);
-        mButtton.setOnClickListener(v -> longitudineLatitudine(true));
+        Button mButtton = thisFragment.findViewById(R.id.test_button_my_post_twitter);
+        mButtton.setOnClickListener(v -> makeNewPost());
 
         getMyPostsTweets();
 
@@ -160,7 +161,6 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
             //rimuovo l'oggetto vecchio dall'arraylist
             UUID oldUUID = myPostsList.get(position).getId();
             myPostsList.remove(position);
-            mAdapter.notifyDataSetChanged();
             Status tweetStatus;
             try {
                 //cancello il tweet dell'oggetto vecchio
@@ -175,11 +175,11 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                 AvailableObjectsData newObject = new AvailableObjectsData(nameString, username , oldUUID, categoryString,
                         Double.parseDouble(latString), Double.parseDouble(lonString),descrString);
 
-                tweetStatus = postOnTwitter(setFormatTweetArticle(newObject));
+                tweetStatus = Utils.postOnTwitter(setFormatTweetArticle(newObject));
                 //aggiungo l'oggetto nuovo all'arraylist
                 newObject.setTwitterId(tweetStatus.getId());
                 myPostsList.add(newObject);
-
+                mainActivity.addToMyPosts(myPostsList);
                 mAdapter.notifyDataSetChanged();
                 Toast.makeText(getActivity(), "Post modificato", Toast.LENGTH_SHORT).show();
 
@@ -205,6 +205,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         try {
             twitter.tweets().destroyStatus(object.getTwitterId());
             myPostsList.remove(position);
+            mainActivity.addToMyPosts(myPostsList);
             mAdapter.notifyDataSetChanged();
             Log.i("removeobj", "removeObject: "+ position + "inside");
 
@@ -213,7 +214,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         }
     }
 
-    public void longitudineLatitudine(final Boolean dialog) {
+    public void makeNewPost() {
         //ask permission to access location if not already granted
         if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // Permission is not granted
@@ -223,9 +224,7 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
             if (location != null) {
                 latitude = location.getLatitude();
                 longitude = location.getLongitude();
-                if(dialog){
-                    newObjectDialog();
-                }
+                newObjectDialog();
             }
         });
     }
@@ -263,10 +262,11 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
             Status tweetStat;
             AvailableObjectsData myNewObject= new AvailableObjectsData(name.getText().toString(), username, UUID.randomUUID() , category.getText().toString(), Double.parseDouble(latString), Double.parseDouble(lonString), description.getText().toString());
             try {
-                tweetStat = postOnTwitter(setFormatTweetArticle(myNewObject));
+                tweetStat = Utils.postOnTwitter(setFormatTweetArticle(myNewObject));
                 myPostsList.add(myNewObject);
                 myNewObject.setTwitterId(tweetStat.getId());
                 mAdapter.notifyDataSetChanged();
+                mainActivity.addToMyPosts(myPostsList);
             } catch (TwitterException | JSONException e) {
                 e.printStackTrace();
                 Toast.makeText(getActivity(), "errore nell'upload del post", Toast.LENGTH_SHORT).show();
@@ -327,8 +327,6 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                 String jsonString = tweet.text; //this is the body
 
                 try {
-                    //MANCA ID TRA LE COSE
-                    MainActivity mainActivity = (MainActivity) getActivity();
 
                     JSONObject jsonObject = new JSONObject(jsonString);
                     String username1 = jsonObject.get("issuer").toString();
@@ -361,7 +359,8 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                 }
                 maxId = tweet.id;
             }
-
+            if (mainActivity != null)
+                mainActivity.addToMyPosts(myPostsList);
             mAdapter.notifyDataSetChanged();
             Log.v("credd2Myposts", String.valueOf(myPostsList.size()));
 

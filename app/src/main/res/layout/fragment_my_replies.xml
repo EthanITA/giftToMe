@@ -5,17 +5,9 @@
     android:background="@color/tw__composer_black"
     >
 
-    <TextView
-        android:id="@+id/chat_test_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerInParent="true"
-        android:text="@string/your_replies_to_posts"
-        android:textSize="30sp" />
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/my_replies_recycler_view"
-        android:layout_below="@+id/chat_test_text"
+        android:layout_alignParentTop="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

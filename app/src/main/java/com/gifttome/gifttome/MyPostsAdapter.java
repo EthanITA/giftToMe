@@ -89,9 +89,6 @@ class MyPostsAdapter extends RecyclerView.Adapter<MyPostsAdapter.MyViewHolder> {
 
     @Override
     public int getItemCount() {
-
         return AvailableObjectDataList.size();
-
     }
-
 }

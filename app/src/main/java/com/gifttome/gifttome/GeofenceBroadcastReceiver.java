@@ -29,6 +29,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     Intent notificationIntent;
 
     ArrayList<AvailableObjectsData> postsList = new ArrayList<>();
+
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.i("intentreceived!", "onReceive: received ");
@@ -67,7 +68,6 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             Log.i("geofencinglocation", String.valueOf(geofencingEvent.getTriggeringLocation()));
         }
         else {
-            // Log the error.
             Log.e("Geofencetransition","error");
         }
     }
@@ -75,7 +75,10 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
     public void sendNotification(Context context, int id){
         //tap intent todo
-        notificationIntent = new Intent(context, MainActivity.class);
+        notificationIntent = new Intent(
+                //context
+                //, MainActivity.class
+                );
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
 

@@ -6,15 +6,15 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_availableposts"
-            android:title="Oggetti disponibili" />
+            android:title="@string/oggetti_disponibili" />
         <item
             android:id="@+id/nav_myposts"
-            android:title="Oggetti che hai postato" />
+            android:title="@string/i_tuoi_oggetti" />
         <item
             android:id="@+id/nav_replies_to_me"
-            android:title="Risposte a te" />
+            android:title="@string/messaggi_ricevuti" />
         <item
             android:id="@+id/nav_my_replies"
-            android:title="Le tue risposte a oggetti che ti interessano" />
+            android:title="@string/messaggi_inviati" />
     </group>
 </menu>

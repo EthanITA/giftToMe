@@ -20,12 +20,12 @@
     <fragment
         android:id="@+id/nav_replies_to_me"
         android:name="com.gifttome.gifttome.RepliesToMeFragment"
-        android:label="Risposte interessate ai tuoi oggetti" />
+        android:label="messaggi ricevuti" />
 
     <fragment
         android:id="@+id/nav_my_replies"
         android:name="com.gifttome.gifttome.MyRepliesFragment"
-        android:label="Le tue risposte a oggetti che ti interessano"
+        android:label="Messaggi inviati"
         />
     <fragment
         android:id="@+id/nav_single_chat"

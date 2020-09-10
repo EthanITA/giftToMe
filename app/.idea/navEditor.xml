@@ -20,7 +20,7 @@
                       </LayoutPositions>
                     </value>
                   </entry>
-                  <entry key="nav_log&#10;        android:name=">
+                  <entry key="nav_log_in">
                     <value>
                       <LayoutPositions>
                         <option name="myPosition">
@@ -37,7 +37,7 @@
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="256" />
+                            <option name="x" value="12" />
                             <option name="y" value="12" />
                           </Point>
                         </option>

@@ -34,5 +34,9 @@
     <string name="latitudine">Latitudine</string>
     <string name="longitudine">Longitudine</string>
     <string name="rispondi">Rispondi</string>
+    <string name="messaggi_inviati">Messaggi inviati</string>
+    <string name="messaggi_ricevuti">Messaggi ricevuti</string>
+    <string name="i_tuoi_oggetti">I tuoi oggetti</string>
+    <string name="oggetti_disponibili">Oggetti disponibili</string>
 
 </resources>

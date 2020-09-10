@@ -67,21 +67,24 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
         mAdapter = new RepliesAdapter(repliesList, this);
         repliesRecyclerView.setAdapter(mAdapter);
 
-        getRepliesTweets();
+        getRepliesTweets(true);
         mAdapter.notifyDataSetChanged();
 
         return thisFragment;
     }
 
-    private void getRepliesTweets() {
+    private void getRepliesTweets(boolean toObjects) {
         userTimeline = new UserTimeline.Builder()
                 .screenName("GiftToME5")
                 .includeRetweets(false)
                 .maxItemsPerRequest(200)
                 .build();
-        userTimeline.next(null, callback);
+        if (toObjects)
+            userTimeline.next(null, callbackToObjects);
+        else
+            userTimeline.next(null, callbackToReplies );
     }
-    Callback<TimelineResult<Tweet>> callback = new Callback<TimelineResult<Tweet>>()
+    Callback<TimelineResult<Tweet>> callbackToObjects = new Callback<TimelineResult<Tweet>>()
     {
         @Override
         public void success(Result<TimelineResult<Tweet>> searchResult)
@@ -89,7 +92,6 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
             List<Tweet> tweets = searchResult.data.items;
             long maxId = 0;
             repliesList.clear();
-            Log.i("szfmprtmf", "success: "+ mainActivity.getMyPosts().size());
             for (Tweet tweet : tweets){
                 String jsonString = tweet.text; //this is the body
 
@@ -100,15 +102,11 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
                 try {
                     JSONObject jsonObject = new JSONObject(jsonString);
                     UUID targetId = UUID.fromString(jsonObject.get("target").toString());
-
+                    String receiver= jsonObject.get("receiver").toString();
+                    String sender = jsonObject.get("sender").toString();
                     for (AvailableObjectsData myObject :
-                            mainActivity.getMyPosts()) {
-                        if (myObject.getId().equals(targetId) ) {
-                            String sender = jsonObject.get("sender").toString();
-                            Log.i("cred", sender);
-
-                            String receiver = jsonObject.get("receiver").toString();
-                            Log.i("cred", "kem");
+                         mainActivity.getMyPosts()) {
+                        if (myObject.getId().equals(targetId) && !username.equals(sender)) {
                             UUID id = UUID.fromString(jsonObject.get("id").toString());
                             String message = jsonObject.get("message").toString();
 
@@ -117,24 +115,62 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
                             reply.setReplyToId(tweet.inReplyToStatusId);
                             reply.setObjectRepliedTo(myObject);
 
-                            if (!sender.equals("") && !receiver.equals(""))
-                                repliesList.add(reply);
+                            repliesList.add(reply);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            mAdapter.notifyDataSetChanged();
+            getRepliesTweets(false);
+        }
+        @Override
+        public void failure(com.twitter.sdk.android.core.TwitterException error)
+        {
+            Log.e("TAG","Error");
+            Toast.makeText(getActivity(), "problema di connessione", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+Callback<TimelineResult<Tweet>> callbackToReplies = new Callback<TimelineResult<Tweet>>()
+    {
+        @Override
+        public void success(Result<TimelineResult<Tweet>> searchResult) {
+            List<Tweet> tweets = searchResult.data.items;
+            for (Tweet tweet : tweets){
+                String jsonString = tweet.text; //this is the body
+
+                //se il tweet non è una risposta viene ignorato
+                if(!jsonString.contains("#LAM_giftToMe_2020 -reply"))
+                    continue;
+
+                try {
+                    JSONObject jsonObject = new JSONObject(jsonString);
+                    UUID targetId = UUID.fromString(jsonObject.get("target").toString());
+                    String receiver= jsonObject.get("receiver").toString();
+
+                    for (AvailableObjectsData availPosts :
+                            mainActivity.getAvailablePosts()) {
+                        if (availPosts.getId().equals(targetId) && username.equals(receiver)) {
+                            String sender = jsonObject.get("sender").toString();
+                            UUID id = UUID.fromString(jsonObject.get("id").toString());
+                            String message = jsonObject.get("message").toString();
+
+                            Reply reply = new Reply(id, sender, targetId, receiver, message);
+                            reply.setTwitterId(tweet.getId());
+                            reply.setReplyToId(tweet.inReplyToStatusId);
+                            reply.setObjectRepliedTo(availPosts);
+
+                            repliesList.add(reply);
                             Log.v("credd1RepliesToMe", String.valueOf(repliesList.size()));
                         }
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                maxId = tweet.id;
             }
-
-            Log.i("rplstmrplssz", "success: " + repliesList.size());
             mAdapter.notifyDataSetChanged();
-
-            //da ricontrollare
-            if (searchResult.data.items.size() == 200) {
-                userTimeline.previous(maxId, callback);
-            }
         }
         @Override
         public void failure(com.twitter.sdk.android.core.TwitterException error)
@@ -146,7 +182,6 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
 
     @Override
     public void onClick(View v) {
-        //do stuff (todo)
         int i = v.getId();
         dialogCreateReplyToReply(repliesList.get(i));
 
@@ -223,7 +258,8 @@ public class RepliesToMeFragment extends Fragment implements View.OnClickListene
             Reply message = messageList.get(position);
             String messageText = "\""+message.getMessage()+"\"";
             holder.replyMessage.setText(messageText);
-            holder.replierName.setText(message.getSender());
+            String sentFrom = "Inviato da: "+ message.getSender();
+            holder.replierName.setText(sentFrom);
             if(message.getObjectRepliedTo() != null){
                 String interestedObj = "riguardante "+message.getObjectRepliedTo().getName();
                 holder.objectRepliedTo.setText(interestedObj);

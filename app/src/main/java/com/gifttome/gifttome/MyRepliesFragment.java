@@ -104,7 +104,6 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
                         UUID targetId = UUID.fromString(jsonObject.get("target").toString());
 
                         String receiver = jsonObject.get("receiver").toString();
-                        Log.i("cred", "kem");
                         UUID id = UUID.fromString(jsonObject.get("id").toString());
                         String message = jsonObject.get("message").toString();
 
@@ -113,30 +112,21 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
                         reply.setReplyToId(tweet.inReplyToStatusId);
                         //reply.setObjectRepliedTo(myObject);
                         repliesList.add(reply);
-                        Log.v("credd1myreplies", String.valueOf(repliesList.size()));
                     }
-
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
                 maxId = tweet.id;
             }
-
             getObjectsRepliedToTweets();
-
-            mAdapter.notifyDataSetChanged();
-
-            Log.i("credd2replies", String.valueOf(repliesList.size()));
-
-            //da ricontrollare
-            if (searchResult.data.items.size() == 100) {
-                userTimeline.previous(maxId, callback);
-            }
         }
         @Override
         public void failure(com.twitter.sdk.android.core.TwitterException error) {
             Log.e("TAG","Error");
-            Toast.makeText(getActivity(), "problema di connessione", Toast.LENGTH_SHORT).show();
+            Log.e("TAG", "failure: " + error.getMessage() );
+            error.printStackTrace();
+
+            Toast.makeText(getActivity(), "problema di connessione nel cercare risposte", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -166,55 +156,40 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
                         JSONObject jsonObject = new JSONObject(jsonString);
                         repliedToId = UUID.fromString(jsonObject.get("id").toString());
 
-                        Log.i("clbakcrepto", String.valueOf(repliedToId));
-                        Log.i("clbakrepiddd", String.valueOf(thisReply.getTargetid()));
                         if (repliedToId.equals(thisReply.getTargetid())) {
-                            Log.i("thsrplid", String.valueOf(repliedToId));
                             String name1 = jsonObject.get("name").toString();
-
-                            Log.i("thsrplid1", String.valueOf(repliedToId));
-
                             String username1 = jsonObject.get("issuer").toString();
-                            Log.i("thsrplid2", String.valueOf(repliedToId));
-
                             String category1 = jsonObject.get("category").toString();
-                            Log.i("thsrplid3", String.valueOf(repliedToId));
-
                             double lat1 = Double.parseDouble(jsonObject.get("lat").toString());
-                            Log.i("thsrplid4", String.valueOf(repliedToId));
 
                             double lon1 = Double.parseDouble(jsonObject.get("lon").toString());
                             String description1 = jsonObject.get("description").toString();
                             AvailableObjectsData targetPost = new AvailableObjectsData(name1, username1, repliedToId, category1, lat1, lon1, description1);
                             targetPost.setTwitterId(tweet.getId());
                             thisReply.setObjectRepliedTo(targetPost);
-                            Log.i("objectregpdto", targetPost.getName());
-                            Log.i("objectregpdto", targetPost.toString());
-                            Log.i("ciao", "targetPost.toString()");
-                        }
+                            //se non è stata trovato l'oggetto a cui si risponde significa che è stato cancellato
+                            //TODO CANCELLARE LA RISPOSTA SE L'OGGETTO A CUI SI RIFERISCE È STATO CANCELLATO
 
+                            boolean postDeleted = true;
+                            for (AvailableObjectsData availPost: mainActivity.getAvailablePosts()){
+                                if (targetPost.getId().equals(availPost.getId())) {
+                                    postDeleted = false;
+                                    break;
+                                }
+                            }
+                            if(postDeleted){
+                                repliesList.remove(thisReply);
+                                deleteReply(-1, thisReply);
+                            }
+                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
                         Log.i("ciaoerror", "targetPost.toString()");
-
                     }
-
-                    maxId = tweet.id;
                 }
             }
-            //TODO CANCELLARE LA RISPOSTA SE L'OGGETTO A CUI SI RIFERISCE È STATO CANCELLATO
-            //se non è stata trovato l'oggetto a cui si risponde significa che è stato cancellato
 
-            for (Reply deleteReply: repliesList){
-                if (deleteReply.getObjectRepliedTo() == null)
-                    repliesList.remove(deleteReply);
-            }
             mAdapter.notifyDataSetChanged();
-
-            //da ricontrollare
-            if (searchResult.data.items.size() == 100) {
-                userTimeline.previous(maxId, callback);
-            }
         }
         @Override
         public void failure(com.twitter.sdk.android.core.TwitterException error) {
@@ -226,7 +201,6 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onClick(View v) {
         int position = v.getId();
-
         dialogModifyReply(position);
         mAdapter.notifyDataSetChanged();
     }
@@ -241,7 +215,7 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
 
         builder.setView(edittext);
         builder.setPositiveButton("MODIFICA", (dialog, which) -> {
-            if(!deleteReply(position))
+            if(!deleteReply(position, null))
                 return;
 
             replyToEdit.setMessage(edittext.getText().toString());
@@ -256,23 +230,26 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
                 e.printStackTrace();
             }
         });
-        builder.setNeutralButton("Cancella Risposta", (dialog, which) -> deleteReply(position));
+        builder.setNeutralButton("Cancella Risposta", (dialog, which) -> deleteReply(position, null));
         builder.setNegativeButton("annulla", null);
         AlertDialog dialog = builder.create();
 
         dialog.show();
     }
 
-    private boolean deleteReply(int position) {
+    private boolean deleteReply(int position, Reply reply) {
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        Log.i("removeobj", "removeObject: "+ position);
+        Status status;
         try {
-            Status status = twitter.tweets().destroyStatus(repliesList.get(position).getTwitterId());
-            repliesList.remove(position);
+            if(position != -1){
+                status = twitter.tweets().destroyStatus(repliesList.get(position).getTwitterId());
+                repliesList.remove(position);
+            }
+            else{
+                status = twitter.tweets().destroyStatus(reply.getTwitterId());}
             mAdapter.notifyDataSetChanged();
-            Log.i("removeobj", "removeObject: "+ position + "inside");
             return (status != null);
         }
         catch (TwitterException e) {
@@ -330,12 +307,9 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
             if(message.getObjectRepliedTo() != null) {
                 String interestedObj = "riguardante: "+ message.getObjectRepliedTo().getName();
                 holder.objectRepliedTo.setText(interestedObj);
-
-                Log.i("objrepltogetnaem", "onBindViewHolder: "+ message.getObjectRepliedTo().getName());
             }
 
             //gestione dell'espansione dell'item
-
             final boolean isExpanded = position == mExpandedPosition;
             //holder.chatButton.setVisibility(isExpanded ? View.VISIBLE:View.GONE);
             holder.itemView.setActivated(isExpanded);

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,7 +17,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -43,7 +41,6 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 
 import twitter4j.Status;
-import twitter4j.TwitterFactory;
 
 
 public class AvailablePostsFragment extends Fragment implements ItemClickListener, View.OnClickListener{
@@ -56,7 +53,6 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     ArrayList<AvailableObjectsData> avObData = new ArrayList<>();
     private MainActivity mainActivity;
     private EditText searchText;
-    private Button searchButton;//todo searching
 
 
     public AvailablePostsFragment() {
@@ -70,8 +66,6 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
 
         if(username == null) {
             navController.navigate(R.id.nav_log_in);
-            Log.i("usrnmnll", "onCreateView: username è null");
-
         }
     }
 
@@ -89,7 +83,6 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         if(username== null)
             return thisFragment;
 
-        Log.i("usernamefromshared", "onCreateView: " + username);
         inizializzazione();
         TwitterConfig config = new TwitterConfig.Builder(requireContext())
                 .logger(new DefaultLogger(Log.DEBUG))
@@ -106,7 +99,7 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         recyclerView.setAdapter(nAdapter);
 
         searchText = thisFragment.findViewById(R.id.search_text);
-        searchButton = thisFragment.findViewById(R.id.search_button1);
+        Button searchButton = thisFragment.findViewById(R.id.search_button1);
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -132,10 +125,7 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
 
     @Override
     public void onClick(View view, int position) {
-        Toast.makeText(getActivity(), "before gototchat"+ position, Toast.LENGTH_SHORT).show();
-        //in teoria se clicchi ti manda al chat fragment todo
-        Toast.makeText(getActivity(), String.valueOf(view.getRootView().getId()), Toast.LENGTH_SHORT).show();
-        goToChatFragment();
+      //goToChatFragment();
     }
 
     public void goToChatFragment(){
@@ -162,29 +152,22 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         public void success(Result<TimelineResult<Tweet>> searchResult)
         {
             List<Tweet> tweets = searchResult.data.items;
-            long maxId = 0;
             avObData.clear();
 
             for (Tweet tweet : tweets){
                 String jsonString = tweet.text; //Here is the body
                 try {
                     JSONObject jsonObject = new JSONObject(jsonString);
-
                     //sceglie i post che non hanno lo stesso username dell'utente
                     String username1 = jsonObject.get("issuer").toString();
-                    Log.v("credUsernameAPF", username1);
-                    Log.v("credUsernameAPFSP", username);
 
                     if(!username1.equals(username)) {
                         String name1 = jsonObject.get("name").toString();
-                        Log.v("cred", name1);
-
                         String userId = jsonObject.get("id").toString();
                         String category1 = jsonObject.get("category").toString();
                         double lat1 = Double.parseDouble(jsonObject.get("lat").toString());
                         double lon1 = Double.parseDouble(jsonObject.get("lon").toString());
                         String description1 = jsonObject.get("description").toString();
-                        Log.i("idnotvalid", userId);
                         AvailableObjectsData newPost = new AvailableObjectsData(name1, username1, UUID.fromString(userId), category1, lat1, lon1, description1);
                         newPost.setTwitterId(tweet.getId());
                         if (!name1.equals("") && !username1.equals("")) {
@@ -194,20 +177,10 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
-                maxId = tweet.id;
-                Log.v("TagSuccc","str");
-
             }
             if (mainActivity != null)
                 mainActivity.addNewAvailablePost(avObData);
             nAdapter.notifyDataSetChanged();
-            Log.v("creddavobdataavailposts", String.valueOf(avObData.size()));
-
-            //da ricontrollare
-            if (searchResult.data.items.size() == 100) {
-                userTimeline.previous(maxId, callback);
-            }
         }
         @Override
         public void failure(TwitterException error)
@@ -225,15 +198,7 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
         gtib.makeRequest(text, new RepositoryCallback() {
             @Override
             public void onComplete(ArrayList<AvailableObjectsData> result) {
-                Log.i("oncompletearray", "onComplete: " + result.size());
-                //mainActivity.addToMyPosts(result);
-/*
-                avObData.clear();
-                avObData.addAll(result);
-                MainActivity mainActivity = (MainActivity) getActivity();
-                assert mainActivity != null;
-                mainActivity.addNewAvailablePost(avObData);
- */
+                Log.i("TAG", "onComplete: completed");
             }
         });
     }
@@ -331,14 +296,11 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
 
                     if(!username1.equals(username)) {
                         String name1 = jsonObject.get("name").toString();
-                        Log.v("cred", name1);
-
                         String userId = jsonObject.get("id").toString();
                         String category1 = jsonObject.get("category").toString();
                         double lat1 = Double.parseDouble(jsonObject.get("lat").toString());
                         double lon1 = Double.parseDouble(jsonObject.get("lon").toString());
                         String description1 = jsonObject.get("description").toString();
-                        Log.i("idnotvalid", userId);
                         AvailableObjectsData newPost = new AvailableObjectsData(name1, username1, UUID.fromString(userId), category1, lat1, lon1, description1);
                         newPost.setTwitterId(tweet.getId());
                         if (!name1.equals("") && !username1.equals("")) {
@@ -363,5 +325,4 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
             Log.e("TAG","Error");
         }
     };
-
 }

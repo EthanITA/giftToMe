@@ -198,18 +198,15 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
 
     public void removeObject(int position) {
         AvailableObjectsData object = myPostsList.get(position);
-
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        Log.i("removeobj", "removeObject: "+ position);
         try {
             twitter.tweets().destroyStatus(object.getTwitterId());
             myPostsList.remove(position);
             mainActivity.addToMyPosts(myPostsList);
             mAdapter.notifyDataSetChanged();
-            Log.i("removeobj", "removeObject: "+ position + "inside");
-
-        } catch (TwitterException e) {
+        }
+        catch (TwitterException e) {
             e.printStackTrace();
         }
     }
@@ -314,33 +311,21 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
                 .build();
         userTimeline.next(null, callback);
     }
-    Callback<TimelineResult<Tweet>> callback = new Callback<TimelineResult<Tweet>>()
-    {
+    Callback<TimelineResult<Tweet>> callback = new Callback<TimelineResult<Tweet>>() {
         @Override
-        public void success(Result<TimelineResult<Tweet>> searchResult)
-        {
+        public void success(Result<TimelineResult<Tweet>> searchResult) {
             List<Tweet> tweets = searchResult.data.items;
-            long maxId = 0;
             myPostsList.clear();
 
             for (Tweet tweet : tweets){
                 String jsonString = tweet.text; //this is the body
-
                 try {
-
                     JSONObject jsonObject = new JSONObject(jsonString);
                     String username1 = jsonObject.get("issuer").toString();
-                    Log.i("cred", username1);
-
-                    Log.i("jsonid", jsonObject.get("id").toString());
-                    Log.i("jsonid", (String) jsonObject.get("id"));
 
                     if (username.equals(username1)){
                         String name1 = jsonObject.get("name").toString();
-                        Log.i("cred", name1);
-
                         UUID id1 = UUID.fromString(jsonObject.get("id").toString());
-
                         String category = jsonObject.get("category").toString();
                         double lat = Double.parseDouble(jsonObject.get("lat").toString());
                         double lon = Double.parseDouble(jsonObject.get("lon").toString());
@@ -348,39 +333,25 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
 
                         AvailableObjectsData myPost = new AvailableObjectsData(name1, username1, id1 , category, lat, lon, description);
                         myPost.setTwitterId(tweet.getId());
-                        Log.v("TagSuccc", "str");
 
                         if (!name1.equals("") && !username1.equals(""))
                             myPostsList.add(myPost);
-                        Log.v("credd1", String.valueOf(myPostsList.size()));
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                maxId = tweet.id;
             }
-            if (mainActivity != null)
-                mainActivity.addToMyPosts(myPostsList);
             mAdapter.notifyDataSetChanged();
-            Log.v("credd2Myposts", String.valueOf(myPostsList.size()));
-
-            //da ricontrollare
-            if (searchResult.data.items.size() == 100) {
-                userTimeline.previous(maxId, callback);
-            }
         }
         @Override
-        public void failure(com.twitter.sdk.android.core.TwitterException error)
-        {
+        public void failure(com.twitter.sdk.android.core.TwitterException error) {
             Log.e("TAG","Error");
             Toast.makeText(getActivity(), "errore, controllare la connessione ad internet", Toast.LENGTH_SHORT).show();
-
         }
     };
 
     @Override
     public void onClick(View v) {
-        Log.i("onclickposition", "onClick: "+ v.getId());
         modifyPost(v.getId());
     }
 }

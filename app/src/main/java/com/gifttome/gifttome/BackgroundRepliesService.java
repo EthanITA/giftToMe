@@ -97,14 +97,11 @@ public class BackgroundRepliesService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-        Log.i("servv", "starting service: ");
-        // For each start request, send a message to start a job and deliver the
-        // start ID so we know which request we're stopping when we finish the job
+
         username = intent.getStringExtra("username");
         Gson gson = new Gson();
         String jsonMyPosts = intent.getStringExtra("myPosts");
         if(jsonMyPosts != null) {
-            Log.i("myPosts", jsonMyPosts);
             Type type = new TypeToken<ArrayList<AvailableObjectsData>>() {
             }.getType();
             myPosts = gson.fromJson(jsonMyPosts, type);
@@ -116,15 +113,12 @@ public class BackgroundRepliesService extends Service {
             }.getType();
             replies = gson.fromJson(jsonReplies, type);
         }
-        Log.i("hndlwek", "onHandleWork: myposts" + myPosts.size());
-        Log.i("hndlwek", "onHandleWork: myposts" + replies.size());
-
         Message msg = serviceHandler.obtainMessage();
         msg.arg1 = startId;
 
         serviceHandler.sendMessage(msg);
 
-        // If we get killed, after returning from here, restart
+        //Se il processo viene ucciso viene richiamato
         return START_STICKY;
     }
 
@@ -133,19 +127,13 @@ public class BackgroundRepliesService extends Service {
         return null;
     }
 
-    @Override
-    public void onDestroy() {
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
-    }
-
     private void checkForRepliesTwitter(Context context, ArrayList<AvailableObjectsData> postlist, ArrayList<String> alreadycheckedreply, String username) {
         Twitter twitter = TwitterFactory.getSingleton();
-        Log.i("insdthrpllsch", "dentro checkforreplies: ");
         UserTimeline userTimeline = new UserTimeline.Builder().screenName("GiftToME5")
                 .includeRetweets(false)
                 .maxItemsPerRequest(200)
                 .build();
-        Log.i("insdthrpllsch", "dentro checkforreplies2: ");
+        Log.i("insdthrpllsch", "dentro checkforreplies: ");
 
         userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
             @Override
@@ -155,9 +143,7 @@ public class BackgroundRepliesService extends Service {
                 List<Tweet> tweets = searchResult.data.items;
                 long maxId = 0;
                 UUID repliedToId;
-                Log.i("insdthrpllsch", "success postlist: " + postlist.size());
-                Log.i("12334", "successalreadychcked: " + alreadycheckedreply.size());
-                for (Tweet tweet : tweets){
+               for (Tweet tweet : tweets){
                     String jsonString = tweet.text;
                     if(jsonString.contains("#LAM_giftToMe_2020-article"))
                         continue;
@@ -171,7 +157,7 @@ public class BackgroundRepliesService extends Service {
 
                             //se ho una risposta nuova
                             if(myPost.getId().equals(targetId) && !alreadycheckedreply.contains(replyId) && !sender.equals(username)){
-                                Log.i("insdthrpllsch", "success: risposta trovata" + replyId);
+                                Log.i("tag", "success: risposta trovata" + replyId);
                                 String textReply = String.valueOf(jsonObject.get("message"));
                                 sendNotification(context, myPost, textReply);
                                 replies.add(replyId);
@@ -179,15 +165,13 @@ public class BackgroundRepliesService extends Service {
 
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            Log.i("fdlna", "error: "+ e.getMessage());
+                            Log.i("err", "error: "+ e.getMessage());
                         }
                     }}
-                Log.i("srchdcl", "successful search: ");
             }
-
             @Override
             public void failure(com.twitter.sdk.android.core.TwitterException error) {
-                Log.e("TAG","Errorer");
+                Log.e("TAG","Errorer" + error.getMessage() + " " + error.toString());
                 Toast.makeText(context, "problema di connessione", Toast.LENGTH_SHORT).show();
             }
         });
@@ -196,7 +180,7 @@ public class BackgroundRepliesService extends Service {
     public static void sendNotification(Context context, AvailableObjectsData myNotifiedPost,
                                         String replyText){
         //tap intent todo
-        int notificationId = 1;
+        int notificationId = 5213;
         Log.i("insdhn", "dentro sendNotification");
 
         Intent notificationIntent = new Intent(context, MainActivity.class);
@@ -219,8 +203,7 @@ public class BackgroundRepliesService extends Service {
     }
 
     private void createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
+        // notification channel necessario per api 26+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = getString(R.string.channel_name);
             String description = getString(R.string.channel_description);
@@ -233,4 +216,3 @@ public class BackgroundRepliesService extends Service {
         }
     }
 }
-

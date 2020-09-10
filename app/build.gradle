@@ -10,7 +10,7 @@ android {
     }
     defaultConfig {
         applicationId "com.gifttome.gifttome"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -40,11 +40,9 @@ dependencies {
         implementation "androidx.navigation:navigation-dynamic-features-fragment:$nav_version"
 
     }
+
     implementation 'com.android.support:multidex:1.0.3'
-
-    //workmanager
-    implementation "androidx.work:work-runtime:2.4.0"
-
+    
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.google.android.material:material:1.2.1'
 

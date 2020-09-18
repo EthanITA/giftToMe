@@ -13,8 +13,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
-import android.widget.Toast;
 import android.os.Process;
+import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -45,7 +45,6 @@ public class BackgroundRepliesService extends Service {
     private ArrayList<String>  replies = new ArrayList<>();
     private String username;
 
-    // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
         public ServiceHandler(Looper looper) {
             super(looper);
@@ -55,39 +54,23 @@ public class BackgroundRepliesService extends Service {
             while(myPosts.size() > 0) {
                 checkForRepliesTwitter(getApplicationContext(), myPosts, replies, username);
                 try {
-                    Thread.sleep(8000);
+                    Thread.sleep(5000);
                     stopSelf();
 
                 } catch (InterruptedException e) {
                     Log.e("rerror", "onHandleWork: ");
-
                     e.printStackTrace();
-
                 }
             }
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                // Restore interrupt status.
-                Thread.currentThread().interrupt();
-            }
-            // Stop the service using the startId, so that we don't stop
-            // the service in the middle of handling another job
-            stopSelf(msg.arg1);
         }
     }
 
     @Override
     public void onCreate() {
-        // Start up the thread running the service. Note that we create a
-        // separate thread because the service normally runs in the process's
-        // main thread, which we don't want to block. We also make it
-        // background priority so CPU-intensive work doesn't disrupt our UI.
         HandlerThread thread = new HandlerThread("ServiceStartArguments",
                 Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
 
-        // Get the HandlerThread's Looper and use it for our Handler
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
         createNotificationChannel();
@@ -96,7 +79,7 @@ public class BackgroundRepliesService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), "ServiceStarted", Toast.LENGTH_SHORT).show();
 
         username = intent.getStringExtra("username");
         Gson gson = new Gson();
@@ -133,13 +116,11 @@ public class BackgroundRepliesService extends Service {
                 .includeRetweets(false)
                 .maxItemsPerRequest(200)
                 .build();
-        Log.i("insdthrpllsch", "dentro checkforreplies: ");
+        Toast.makeText(getApplicationContext(), "ricerca della posizione non supportata", Toast.LENGTH_SHORT).show();
 
         userTimeline.next(null, new Callback<TimelineResult<Tweet>>() {
             @Override
-            public void success(Result<TimelineResult<Tweet>> searchResult)
-            {
-                Log.i("insdthrpllsch", "dentro callback");
+            public void success(Result<TimelineResult<Tweet>> searchResult) {
                 List<Tweet> tweets = searchResult.data.items;
                 long maxId = 0;
                 UUID repliedToId;
@@ -162,17 +143,13 @@ public class BackgroundRepliesService extends Service {
                                 sendNotification(context, myPost, textReply);
                                 replies.add(replyId);
                             }
-
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            Log.i("err", "error: "+ e.getMessage());
                         }
                     }}
             }
             @Override
             public void failure(com.twitter.sdk.android.core.TwitterException error) {
-                Log.e("TAG","Errorer" + error.getMessage() + " " + error.toString());
-                Toast.makeText(context, "problema di connessione", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -181,8 +158,7 @@ public class BackgroundRepliesService extends Service {
                                         String replyText){
         //tap intent todo
         int notificationId = 5213;
-        Log.i("insdhn", "dentro sendNotification");
-
+        Log.i("dentro notification", "sendNotification: ");
         Intent notificationIntent = new Intent(context, MainActivity.class);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 1, notificationIntent, 0);

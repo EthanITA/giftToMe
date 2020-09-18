@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
@@ -95,22 +96,31 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main_nav_dra);
         //setContentView(R.layout.activity_main);
 
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        username = sharedPreferences.getString("username", null);
+/*
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("username", null);
+        editor.apply();
+ */
+
+        if(username != null) {
         initialize();
 
         makeLocationRequest();
-
         startLocationUpdates();
 
         StartCheckingForRepliesInBackground();
+        }
+
+
     }
 
 
     private void initialize() {
 
         initializeTwitter();
-
-        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
-        username = sharedPreferences.getString("username", null);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -164,10 +174,6 @@ public class MainActivity extends AppCompatActivity {
 
         SettingsClient client = LocationServices.getSettingsClient(this);
         Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
-        task.addOnSuccessListener(this, locationSettingsResponse -> {
-            // All location settings are satisfied. The client can initialize location requests here.
-        });
-
         task.addOnFailureListener(this, e -> {
             if (e instanceof ResolvableApiException) {
                 // Location settings are not satisfied
@@ -202,23 +208,7 @@ public class MainActivity extends AppCompatActivity {
                 Looper.getMainLooper());
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        //stopLocationUpdates();
 
-    }
-
-    private void stopLocationUpdates() {
-        if (fusedLocationClientMain != null)
-            fusedLocationClientMain.removeLocationUpdates(locationCallback);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        //createNotificationChannel();
-    }
 
     public PendingIntent getGeofencePendingIntent(ArrayList<AvailableObjectsData> arr) {
         if (geofencePendingIntent != null) {
@@ -289,9 +279,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void addNewAvailablePost(ArrayList<AvailableObjectsData> avObjects){
         geofencePendingIntent = null;
+        if(geofencingClient != null)
         geofencingClient.removeGeofences(getGeofencePendingIntent(avObjects));
         geofenceList.clear();
         availablePosts.clear();
+        availablePosts.addAll(avObjects);
         generateGeofencesForAvailableObjects();
     }
 

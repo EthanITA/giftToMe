@@ -87,24 +87,14 @@ public class MyPostsFragment extends Fragment implements View.OnClickListener{
         editor.apply();
     }
 
-    private void loadData(){
-        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        String json = sharedPreferences.getString("objects data list", null);
-        Type type = new TypeToken<ArrayList<AvailableObjectsData>>() {}.getType();
-        myPostsList = gson.fromJson(json, type);
-        if(myPostsList == null){
-            myPostsList = new ArrayList<>();
-        }
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View thisFragment = inflater.inflate(R.layout.fragment_my_posts, container, false);
-        RecyclerView recyclerView = thisFragment.findViewById(R.id.my_posts_recyclerview);
         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
         username = sharedPreferences.getString("username", null);
+
+        RecyclerView recyclerView = thisFragment.findViewById(R.id.my_posts_recyclerview);
 
         //in initialize()
         mainActivity = (MainActivity) getActivity();

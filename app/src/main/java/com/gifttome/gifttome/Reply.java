@@ -24,6 +24,10 @@ public class Reply{
     private Long twitterId;
     private Long replyToId;
     private AvailableObjectsData objectRepliedTo;
+
+
+
+
     private boolean objectRepliedToIsDeleted;
 
     public Reply getReplyRepliedTo() {

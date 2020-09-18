@@ -36,9 +36,6 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         createNotificationChannel(context);
         Bundle intentBundle = intent.getExtras();
         if (intentBundle != null) {
-            Log.i("insdintntbundle", "onReceive: " + intentBundle.get("jsonlist"));
-            Log.i("insdintntbundle", "onReceive2: "+ intentBundle.get("oblist"));
-            Log.i("insdintntbundle", "onReceive3: "+ (ArrayList<AvailableObjectsData>)intentBundle.get("oblist"));
             Gson gson = new Gson();
             String json = intentBundle.getString("jsonlist");
             if(json != null) {
@@ -62,10 +59,8 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             // Geofences attivati, invio notifica
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
             for (Geofence geofence : triggeringGeofences) {
-                Log.i("trigggeofence", geofence.getRequestId());
                 sendNotification(context, Integer.parseInt(geofence.getRequestId()));
             }
-            Log.i("geofencinglocation", String.valueOf(geofencingEvent.getTriggeringLocation()));
         }
         else {
             Log.e("Geofencetransition","error");
@@ -74,14 +69,9 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
 
     public void sendNotification(Context context, int id){
-        //tap intent todo
-        notificationIntent = new Intent(
-                //context
-                //, MainActivity.class
-                );
+        notificationIntent = new Intent();
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
-
         //create notification
         notificationManagerCompat = NotificationManagerCompat.from(context);
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, String.valueOf(R.string.CHANNEL_ID));

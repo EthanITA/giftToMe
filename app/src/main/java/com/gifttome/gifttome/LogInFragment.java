@@ -1,6 +1,7 @@
 package com.gifttome.gifttome;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -57,13 +58,14 @@ public class LogInFragment extends Fragment {
         String newUsername = logInUsername.getText().toString();
         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-
         editor.putString("username", newUsername);
         editor.apply();
 
         if (!newUsername.equals("")) {
             savedStateHandle.set("good_username", true);
             NavHostFragment.findNavController(this).popBackStack();
+            Intent intent = new Intent(getActivity(), MainActivity.class);
+            startActivity(intent);
         } else {
             usernameAlreadyTaken.setVisibility(View.VISIBLE);
         }

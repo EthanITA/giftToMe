@@ -63,7 +63,6 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         NavController navController = NavHostFragment.findNavController(this);
-
         if(username == null) {
             navController.navigate(R.id.nav_log_in);
         }
@@ -72,32 +71,39 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        thisFragment = inflater.inflate(R.layout.fragment_available_posts, container, false);
+
         //check if user has chosen a username
         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("shared preferences", Context.MODE_PRIVATE);
         username = sharedPreferences.getString("username", null);
+        NavController navController = NavHostFragment.findNavController(this);
+        if(username == null) {
+            navController.navigate(R.id.nav_log_in);
+            return thisFragment;
+        }else {
 
-        // Inflate the layout for this fragment
-        thisFragment = inflater.inflate(R.layout.fragment_available_posts, container, false);
+            inizializzazione();
+            //recyclerView
+            RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
+            recyclerView.setLayoutManager(layoutManager);
+            nAdapter = new MyAdapter(avObData, this);
+            recyclerView.setAdapter(nAdapter);
+
+            makeTwitterRequest("true");
+            //getAvailablePostsTweets();
+            nAdapter.notifyDataSetChanged();
+
+            return thisFragment;
+        }
+
+    }
+
+
+    private void inizializzazione() {
         mainActivity = (MainActivity) getActivity();
 
-        if(username== null)
-            return thisFragment;
-
-        inizializzazione();
-        TwitterConfig config = new TwitterConfig.Builder(requireContext())
-                .logger(new DefaultLogger(Log.DEBUG))
-                .twitterAuthConfig(new TwitterAuthConfig("fud09hdnKuTT7PtYNuCZn2tRV", "gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp"))
-                .debug(true)
-                .build();
-        Twitter.initialize(config);
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
-        //recyclerView.setHasFixedSize(true);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        recyclerView.setLayoutManager(layoutManager);
-        nAdapter = new MyAdapter(avObData,  this);
-        recyclerView.setAdapter(nAdapter);
-
+        recyclerView = thisFragment.findViewById(R.id.my_recycler_view);
         searchText = thisFragment.findViewById(R.id.search_text);
         Button searchButton = thisFragment.findViewById(R.id.search_button1);
         searchButton.setOnClickListener(new View.OnClickListener() {
@@ -108,32 +114,18 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
             }
         });
 
-        makeTwitterRequest("true");
-        //getAvailablePostsTweets();
-        nAdapter.notifyDataSetChanged();
+        TwitterConfig config = new TwitterConfig.Builder(requireContext())
+                .logger(new DefaultLogger(Log.DEBUG))
+                .twitterAuthConfig(new TwitterAuthConfig("fud09hdnKuTT7PtYNuCZn2tRV", "gqzr3e1Rlz4noKtuhIytOBgfzjsJGSPNiMqmQO0quby2ycs1lp"))
+                .debug(true)
+                .build();
+        Twitter.initialize(config);
 
-        return thisFragment;
-
-
-    }
-
-
-    private void inizializzazione() {
-
-        recyclerView = thisFragment.findViewById(R.id.my_recycler_view);
     }
 
     @Override
     public void onClick(View view, int position) {
-      //goToChatFragment();
-    }
-
-    public void goToChatFragment(){
-        RepliesToMeFragment newChatFragment = new RepliesToMeFragment();
-        requireActivity().getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragment_container, newChatFragment)
-                .addToBackStack(null)
-                .commit();
+        Log.i("TAG", "onClick: clicked item " + position);
     }
 
     public ArrayList<AvailableObjectsData> getAvailablePostsTweets() {
@@ -170,9 +162,8 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
                         String description1 = jsonObject.get("description").toString();
                         AvailableObjectsData newPost = new AvailableObjectsData(name1, username1, UUID.fromString(userId), category1, lat1, lon1, description1);
                         newPost.setTwitterId(tweet.getId());
-                        if (!name1.equals("") && !username1.equals("")) {
-                            avObData.add(newPost);
-                        }
+                        avObData.add(newPost);
+
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -241,7 +232,6 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
     }
 
     public class GetTwitterInBackground {
-
         private final Executor executor;
 
         public GetTwitterInBackground(Executor executor) {
@@ -256,13 +246,12 @@ public class AvailablePostsFragment extends Fragment implements ItemClickListene
                         ArrayList<AvailableObjectsData> result = getAvailablePostsTweets();
                         callback.onComplete(result);
 
-                    } catch (Exception ignored) {
-
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             });
         }
-
     }
 
     private ArrayList<AvailableObjectsData> getFilteredPosts() {

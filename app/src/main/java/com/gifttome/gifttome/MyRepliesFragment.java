@@ -169,7 +169,6 @@ public class MyRepliesFragment extends Fragment implements View.OnClickListener{
                             thisReply.setObjectRepliedTo(targetPost);
                             //se non è stata trovato l'oggetto a cui si risponde significa che è stato cancellato
                             //TODO CANCELLARE LA RISPOSTA SE L'OGGETTO A CUI SI RIFERISCE È STATO CANCELLATO
-
                             boolean postDeleted = true;
                             for (AvailableObjectsData availPost: mainActivity.getAvailablePosts()){
                                 if (targetPost.getId().equals(availPost.getId())) {
